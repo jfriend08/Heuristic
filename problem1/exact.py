@@ -17,11 +17,31 @@ class exactChange(object):
         changeAmount -= numChange*eachChange
     return result
 
+  def getScoreWithGivenDenominations(self, Denoms):
+    maxChange = 239
+    if not Denoms:
+      return
+    changeArray = [0 for i in range(maxChange)]
+
+    for idx in xrange(len(changeArray)):
+      changeAmount = idx + 1
+      bestExactChange = sys.maxint
+      if changeAmount == 1:
+        changeArray[idx] = 1
+      else:
+        for eachDenom in Denoms:
+          diff = changeAmount - eachDenom
+          if diff > 0:
+            bestExactChange = min(bestExactChange, changeArray[diff-1] + 1)
+        changeArray[idx] = bestExactChange
+
+    print changeArray
+
+
+
 
 
 if __name__ == "__main__":
   arg = sys.argv[1]
   solution = exactChange(float(arg))
-  print solution.getExactChange(25)
-  # for i in xrange(240):
-  #   print getExactChange(i)
+  solution.getScoreWithGivenDenominations([1])
