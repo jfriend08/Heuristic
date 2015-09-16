@@ -22,6 +22,7 @@ class exactChange(object):
     if not Denoms:
       return
 
+    # get changeArray with given denoms list
     changeArray = [0 for i in range(self.maxChange)]
     for idx in xrange(len(changeArray)):
       changeAmount = idx + 1
@@ -36,7 +37,13 @@ class exactChange(object):
             bestExactChange = min(bestExactChange, changeArray[diff-1] + 1)
         changeArray[idx] = bestExactChange
 
-    print changeArray
+    # make mudification for each multiple of 5
+    for idx in xrange(len(changeArray)):
+      if (idx + 1) % 5 == 0:
+        changeArray[idx] = changeArray[idx] * self.N
+
+    return sum(changeArray)
+
 
 
 
@@ -46,4 +53,4 @@ if __name__ == "__main__":
   arg = sys.argv[1]
   solution = exactChange(float(arg))
   print solution.getExactChange(238,[25,10,5,1]) ## for checking
-  solution.getScoreWithGivenDenominations([1,5,10,25])
+  print solution.getScoreWithGivenDenominations([1])
