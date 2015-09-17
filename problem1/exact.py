@@ -5,8 +5,10 @@ class exactChange(object):
   def __init__(self, N):
     self.N = N
     self.maxChange = 239
+    self.numDoms = 7
 
   def getExactChange(self, changeAmount, Denoms):
+    # for testing exact change
     result = []
     for eachChange in Denoms:
       numChange = int(changeAmount/eachChange)
@@ -45,6 +47,24 @@ class exactChange(object):
     return sum(changeArray)
 
 
+  def findOptimalDenoms(self, denoms):
+    while len(denoms) < self.numDoms: # which is 7
+      currValue = self.getScoreWithGivenDenominations(denoms)
+      rankList = []
+      for testDenom in range(denoms[-1],int(self.maxChange/2)):
+        testDenoms = denoms[:]
+        testDenoms.append(testDenom)
+        testValue = self.getScoreWithGivenDenominations(testDenoms)
+        if testValue < currValue:
+          rankList.append((testValue, testDenom)) # tuple of goodValue and denom
+      rankList.sort(key=lambda tup: tup[0])
+      rankList = rankList[:1]
+      denoms.append(rankList[0][1])
+      # print 'current demos: %s' %denoms
+
+    return denoms
+
+
 
 
 
@@ -54,3 +74,14 @@ if __name__ == "__main__":
   solution = exactChange(float(arg))
   print solution.getExactChange(238,[25,10,5,1]) ## for checking
   print solution.getScoreWithGivenDenominations([1])
+  print solution.getScoreWithGivenDenominations(solution.findOptimalDenoms([1]))
+
+
+
+
+
+
+
+
+
+
