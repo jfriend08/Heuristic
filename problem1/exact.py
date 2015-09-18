@@ -3,11 +3,12 @@ import sys
 
 class exactChange(object):
   def __init__(self, N):
-    self.N = N
-    self.maxChange = 239
-    self.numDoms = 7
-    self.bestVal = sys.maxint
-    self.bestDenoms =[]
+    self.N = N # will be assign. Penalty of multiple of 5
+    self.maxChange = 239 # max change of english piund
+    self.numDoms = 7 # num of denomaitions need to design
+    self.bestScore = sys.maxint # store the current best score
+    self.bestDenoms =[] # store the best score's corresponding denomaitions
+    self.numTry = 4 # number of possible values to hold at each level
 
   def getExactChange(self, changeAmount, Denoms):
     # for testing exact change
@@ -49,29 +50,34 @@ class exactChange(object):
 
     return sum(changeArray)
 
-
-  def findOptimalDenoms(self, denoms):
-    currValue = self.getScoreWithGivenDenominations(denoms)
-    if len(denoms) < self.numDoms: # which is 7
-      rankList = []
-      for testDenom in range(denoms[-1],int(self.maxChange/2)):
+  def getTheTopTry(self, denoms, currScore):
+    rankList = []
+    for testDenom in range(2,int(self.maxChange/2)):
+        if testDenom in denoms:
+          continue
         testDenoms = denoms[:]
         testDenoms.append(testDenom)
         testValue = self.getScoreWithGivenDenominations(testDenoms)
-        if testValue < currValue:
+        if testValue < currScore:
           rankList.append((testValue, testDenom)) # tuple of goodValue and denom
-      rankList.sort(key=lambda tup: tup[0])
-      rankList = rankList[:5]
+    rankList.sort(key=lambda tup: tup[0])
+    return rankList[:self.numTry]
+
+  def findOptimalDenoms(self, denoms):
+    # minimize the score. recurssively trying all possibilities
+    currScore = self.getScoreWithGivenDenominations(denoms)
+    if len(denoms) < self.numDoms: # which is 7
+      rankList = self.getTheTopTry(denoms, currScore)
       for testValue, testDenom in rankList:
         testDenoms = denoms[:]
         testDenoms.append(testDenom)
         self.findOptimalDenoms(testDenoms)
 
     else:
-      print 'self.bestVal: %s' %self.bestVal
-      # print 'self.bestDenoms: %s' %self.bestDenoms
-      if currValue < self.bestVal:
-        self.bestVal = currValue
+      if currScore < self.bestScore:
+        print 'self.bestScore: %s' %self.bestScore
+        print 'self.bestDenoms: %s' %self.bestDenoms
+        self.bestScore = currScore
         self.bestDenoms = denoms
 
     return self.bestDenoms
