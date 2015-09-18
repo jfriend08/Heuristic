@@ -6,10 +6,13 @@ class exactChange(object):
     self.N = N
     self.maxChange = 239
     self.numDoms = 7
+    self.bestVal = sys.maxint
+    self.bestDenoms =[]
 
   def getExactChange(self, changeAmount, Denoms):
     # for testing exact change
     result = []
+    Denoms.sort(reverse=True)
     for eachChange in Denoms:
       numChange = int(changeAmount/eachChange)
       if changeAmount <= 0:
@@ -48,8 +51,8 @@ class exactChange(object):
 
 
   def findOptimalDenoms(self, denoms):
-    while len(denoms) < self.numDoms: # which is 7
-      currValue = self.getScoreWithGivenDenominations(denoms)
+    currValue = self.getScoreWithGivenDenominations(denoms)
+    if len(denoms) < self.numDoms: # which is 7
       rankList = []
       for testDenom in range(denoms[-1],int(self.maxChange/2)):
         testDenoms = denoms[:]
@@ -58,11 +61,20 @@ class exactChange(object):
         if testValue < currValue:
           rankList.append((testValue, testDenom)) # tuple of goodValue and denom
       rankList.sort(key=lambda tup: tup[0])
-      rankList = rankList[:1]
-      denoms.append(rankList[0][1])
-      # print 'current demos: %s' %denoms
+      rankList = rankList[:5]
+      for testValue, testDenom in rankList:
+        testDenoms = denoms[:]
+        testDenoms.append(testDenom)
+        self.findOptimalDenoms(testDenoms)
 
-    return denoms
+    else:
+      print 'self.bestVal: %s' %self.bestVal
+      # print 'self.bestDenoms: %s' %self.bestDenoms
+      if currValue < self.bestVal:
+        self.bestVal = currValue
+        self.bestDenoms = denoms
+
+    return self.bestDenoms
 
 
 
@@ -72,9 +84,9 @@ class exactChange(object):
 if __name__ == "__main__":
   arg = sys.argv[1]
   solution = exactChange(float(arg))
-  print solution.getExactChange(238,[25,10,5,1]) ## for checking
-  print solution.getScoreWithGivenDenominations([1])
-  print solution.getScoreWithGivenDenominations(solution.findOptimalDenoms([1]))
+  print solution.getExactChange(238,[1, 14, 33, 37, 57, 62, 79]) ## for checking
+  print solution.getScoreWithGivenDenominations([1, 14, 33, 37, 57, 62, 79])
+  print solution.findOptimalDenoms([1])
 
 
 
