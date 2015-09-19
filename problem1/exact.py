@@ -8,7 +8,7 @@ class exactChange(object):
     self.numDoms = 7 # num of denomaitions need to design
     self.bestScore = sys.maxint # store the current best score
     self.bestDenoms =[] # store the best score's corresponding denomaitions
-    self.numTry = 5 # number of possible values to hold at each level
+    self.numTry = 10 # number of possible values to hold at each level
 
   def getExactChange(self, changeAmount, Denoms):
     # for testing exact change
