@@ -8,7 +8,7 @@ class exactChange(object):
     self.numDoms = 7 # num of denomaitions need to design
     self.bestScore = sys.maxint # store the current best score
     self.bestDenoms =[] # store the best score's corresponding denomaitions
-    self.numTry = 3 # number of possible values to hold at each level
+    self.numTry = 5 # number of possible values to hold at each level
 
   def getExactChange(self, changeAmount, Denoms):
     # for testing exact change
@@ -41,6 +41,8 @@ class exactChange(object):
           diff = changeAmount - eachDenom
           if diff > 0:
             bestExactChange = min(bestExactChange, changeArray[diff-1] + 1)
+          elif diff ==0:
+            bestExactChange = 1
         changeArray[idx] = bestExactChange
 
     # make penalty for each multiple of 5
@@ -50,7 +52,7 @@ class exactChange(object):
 
     return sum(changeArray)
 
-  def getTheTopTry(self, denoms, currScore):
+  def getTheTopTries(self, denoms, currScore):
     rankList = []
     for testDenom in range(2,int(self.maxChange/2)):
         if testDenom in self.bestDenoms or testDenom in denoms:
@@ -67,7 +69,7 @@ class exactChange(object):
     # minimize the score. recurssively trying all possibilities
     currScore = self.getScoreWithGivenDenominations(denoms)
     if len(denoms) < self.numDoms: # which is 7
-      rankList = self.getTheTopTry(denoms, currScore)
+      rankList = self.getTheTopTries(denoms, currScore)
       for testValue, testDenom in rankList:
         testDenoms = denoms[:]
         testDenoms.append(testDenom)
