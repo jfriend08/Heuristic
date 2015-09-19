@@ -4,7 +4,7 @@ import sys
 class exactChange(object):
   def __init__(self, N):
     self.N = N # will be assign. Penalty of multiple of 5
-    self.maxChange = 239 # max change of english piund
+    self.maxChange = 239 # max change of english pound
     self.numDoms = 7 # num of denomaitions need to design
     self.bestScore = sys.maxint # store the current best score
     self.bestDenoms =[] # store the best score's corresponding denomaitions
