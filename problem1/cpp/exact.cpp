@@ -24,17 +24,17 @@ private:
 public:
   Solution(float x): N(x) {} // constructor definition.
 
-  void printArray(vector<int> inputArray) {
+  void printV(vector<int> inputV) {
     //nothing special. just print int vector with ideal format
-    for (int i=0; i<inputArray.size(); i++) {
-      cout<<inputArray[i]<< " ";
+    for (int i=0; i<inputV.size(); i++) {
+      cout<<inputV[i]<< " ";
     }
     cout<<endl;
   }
 
-  float getScoreWithGivenDenominations(vector<int> Denoms) {
+  float getScoreWithGivenDenominations(vector<int> denoms) {
     //input denomination list, then calculate changeArray, and then return the score
-    if (Denoms.empty()) {
+    if (denoms.empty()) {
       return 0;
     }
 
@@ -44,7 +44,6 @@ public:
     int eachDenom; //each denomination(or coin) in the given Denoms vector
     int amountDiff; //definition: changeAmount-eachDenom
     int finalScore = 0; //the sum number of changeArray, with panality(N) considered
-    printArray(changeArray);
 
     //get changeArray with given denoms vector
     for(int idx=0; idx<changeArray.size(); idx++) {
@@ -54,9 +53,9 @@ public:
         changeArray[idx] = 1;
       }
       else {
-        for (int idx_denom=0; idx_denom<Denoms.size(); idx_denom++) {
+        for (int idx_denom=0; idx_denom<denoms.size(); idx_denom++) {
           // always need to add up one coin. dynamic programmingly check previous results and find the best one
-          eachDenom = Denoms[idx_denom];
+          eachDenom = denoms[idx_denom];
           amountDiff = changeAmount - eachDenom;
           if (amountDiff > 0) {
             bestExactChange = min(bestExactChange, changeArray[amountDiff-1] + 1);
@@ -68,17 +67,71 @@ public:
         changeArray[idx] = bestExactChange;
       }
     }
-    printArray(changeArray);
-
+    // make panality for multiple of 5 and then add up the score
     for(int idx=0; idx<changeArray.size(); idx++) {
       if ((idx + 1) % 5 == 0) {
         changeArray[idx] = changeArray[idx] * N;
       }
       finalScore += changeArray[idx];
     }
-    printArray(changeArray);
-
     return finalScore;
+  }
+
+  bool isContained(vector<int> inputV, int x) {
+    if(std::find(inputV.begin(), inputV.end(), x) != inputV.end()) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  template<typename P> struct Cmp {
+    bool operator()(const P &p1, const P &p2){
+      if(p1.first < p2.first) return true;
+      return false;
+      }
+    };
+
+  // bool pairCompare(const pair<float, vector<int>>& firstElem, const pair<float, vector<int>>& secondElem) {
+  //   return firstElem.first < secondElem.first;
+  // }
+
+  vector<pair <float, vector<int>>> getTheTopTries(vector<int> denoms, float currScore) {
+
+    vector<pair<float, vector<int>>> rankList;
+
+    for (int idx_denom=0; idx_denom<denoms.size()/2; idx_denom++) {
+      int testDenom = denoms[idx_denom];
+      if (isContained(bestDenoms, testDenom) || isContained(denoms, testDenom)) {
+        continue;
+      }
+      vector<int> testDenoms = denoms;
+      testDenoms.push_back(testDenom);
+      float testValue = getScoreWithGivenDenominations(testDenoms);
+      if (testValue < currScore){
+        rankList.push_back(make_pair(testValue, testDenoms));
+      }
+    }
+    sort(rankList.begin(), rankList.end(), Cmp<pair<float, vector<int>>>());
+    vector<pair<float, vector<int>>>::const_iterator first = rankList.begin();
+    vector<pair<float, vector<int>>>::const_iterator last = rankList.begin() + 5;
+    vector<pair<float, vector<int>>> topRankList(first, last);
+    return topRankList;
+  }
+
+  pair <float, vector<int>> findOptimalDenoms(vector<int> denoms) {
+    // minimize the score. recurssively trying all possibilities
+    int currScore = getScoreWithGivenDenominations(denoms);
+
+    if (denoms.size() < numDoms) {
+      vector<pair<float, vector<int>>> rankList = getTheTopTries(denoms, currScore);
+      for (int idx=1; idx<rankList.size(); idx++){
+        for testValue, testDenom in rankList:
+        testDenoms = denoms[:]
+        testDenoms.append(testDenom)
+        self.findOptimalDenoms(testDenoms)
+      }
+    }
+    return make_pair(1, denoms);
   }
 
 };
