@@ -1,5 +1,5 @@
 # Mint Problem
- Implemented by c++
+Implemented by c++
 
 # Usage
 ```
