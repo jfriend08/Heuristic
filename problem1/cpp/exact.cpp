@@ -15,10 +15,10 @@ using namespace std;
 class Solution {
 private:
   float N; //will be assign. Penalty of multiple of 5
-  int maxChange = 99; //max change of english pound
-  int numDoms = 5; //num of denomaitions need to design
+  int maxChange = 239; //max change of english pound
+  int numDoms = 7; //num of denomaitions need to design
   float bestScore = FLT_MAX; //store the current best score
-  static vector<int> bestDenoms; //store the best score's corresponding denomaitions
+  vector<int> bestDenoms; //store the best score's corresponding denomaitions
   int numTry = 3; //number of possible values to hold at each level
 
 public:
@@ -84,6 +84,7 @@ public:
       return false;
     }
   }
+
   template<typename P> struct Cmp {
     bool operator()(const P &p1, const P &p2){
       if(p1.first < p2.first) return true;
@@ -91,47 +92,68 @@ public:
       }
     };
 
-  // bool pairCompare(const pair<float, vector<int>>& firstElem, const pair<float, vector<int>>& secondElem) {
-  //   return firstElem.first < secondElem.first;
-  // }
+  vector<pair <float, int>> getTheTopTries(vector<int> denoms, float currScore) {
 
-  vector<pair <float, vector<int>>> getTheTopTries(vector<int> denoms, float currScore) {
+    vector<pair<float, int>> rankList;
 
-    vector<pair<float, vector<int>>> rankList;
+    // cout<<"inside getTheTopTries"<<endl;
+    // cout<<"denoms: "<<endl;
+    // printV(denoms);
+    // cout<<"currScore: "<<currScore<<endl;
 
-    for (int idx_denom=0; idx_denom<denoms.size()/2; idx_denom++) {
-      int testDenom = denoms[idx_denom];
+    for (int idx_denom=1; idx_denom<maxChange/2; idx_denom++) {
+      int testDenom = idx_denom + 1;
       if (isContained(bestDenoms, testDenom) || isContained(denoms, testDenom)) {
         continue;
       }
       vector<int> testDenoms = denoms;
       testDenoms.push_back(testDenom);
       float testValue = getScoreWithGivenDenominations(testDenoms);
+
+      // cout<<"testValue: "<<testValue<<endl;
+      // cout<<"testDenoms:"<<endl;
+      // printV(testDenoms);
+
       if (testValue < currScore){
-        rankList.push_back(make_pair(testValue, testDenoms));
+        rankList.push_back(make_pair(testValue, testDenom));
       }
     }
-    sort(rankList.begin(), rankList.end(), Cmp<pair<float, vector<int>>>());
-    vector<pair<float, vector<int>>>::const_iterator first = rankList.begin();
-    vector<pair<float, vector<int>>>::const_iterator last = rankList.begin() + 5;
-    vector<pair<float, vector<int>>> topRankList(first, last);
+    sort(rankList.begin(), rankList.end(), Cmp<pair<float, int>>());
+    vector<pair<float, int>>::const_iterator first = rankList.begin();
+    vector<pair<float, int>>::const_iterator last = rankList.begin() + numTry;
+    vector<pair<float, int>> topRankList(first, last);
     return topRankList;
   }
 
   pair <float, vector<int>> findOptimalDenoms(vector<int> denoms) {
     // minimize the score. recurssively trying all possibilities
     int currScore = getScoreWithGivenDenominations(denoms);
-
+    // cout<<"currScore: "<<currScore<<endl;
     if (denoms.size() < numDoms) {
-      vector<pair<float, vector<int>>> rankList = getTheTopTries(denoms, currScore);
+      vector<pair<float, int>> rankList = getTheTopTries(denoms, currScore);
+
+      // cout<<"hello"<<endl;
+      // cout<<rankList[0].first<<endl;
+      // cout<<rankList[0].second<<endl;
+
       for (int idx=1; idx<rankList.size(); idx++){
-        for testValue, testDenom in rankList:
-        testDenoms = denoms[:]
-        testDenoms.append(testDenom)
-        self.findOptimalDenoms(testDenoms)
+        int testValue = rankList[idx].first;
+        int testDenom = rankList[idx].second;
+        vector<int> testDenoms = denoms;
+        testDenoms.push_back(testDenom);
+        findOptimalDenoms(testDenoms);
+      }
+    } else {
+      if (currScore < bestScore) {
+
+        cout<<"current bestScore: "<< bestScore <<endl;
+        printV(bestDenoms);
+
+        bestScore = currScore;
+        bestDenoms = denoms;
       }
     }
-    return make_pair(1, denoms);
+    return make_pair(bestScore,bestDenoms);
   }
 
 };
@@ -146,6 +168,9 @@ int main(int argc, char *argv[]){
 	Solution sol(atof(argv[1])); //init the N value
   vector<int> myV(1,1); // denominations should most have 1
   cout<< sol.getScoreWithGivenDenominations(myV)<<endl;
+  pair<float, vector<int>> result = sol.findOptimalDenoms(myV);
+  cout<<"bestScore: "<<result.first<<endl;
+  sol.printV(result.second);
 
 }
 
