@@ -77,6 +77,7 @@ public:
     return finalScore;
   }
 
+  //check given element x is existed in the vetor
   bool isContained(vector<int> inputV, int x) {
     if(std::find(inputV.begin(), inputV.end(), x) != inputV.end()) {
       return true;
@@ -85,22 +86,17 @@ public:
     }
   }
 
+  //later can be used to sort list of pair
   template<typename P> struct Cmp {
     bool operator()(const P &p1, const P &p2){
       if(p1.first < p2.first) return true;
       return false;
-      }
-    };
+    }
+  };
 
+  //given the denoms vector and current score, try different next coin that will yield better score, and return the top numTry
   vector<pair <float, int>> getTheTopTries(vector<int> denoms, float currScore) {
-
     vector<pair<float, int>> rankList;
-
-    // cout<<"inside getTheTopTries"<<endl;
-    // cout<<"denoms: "<<endl;
-    // printV(denoms);
-    // cout<<"currScore: "<<currScore<<endl;
-
     for (int idx_denom=1; idx_denom<maxChange/2; idx_denom++) {
       int testDenom = idx_denom + 1;
       if (isContained(bestDenoms, testDenom) || isContained(denoms, testDenom)) {
@@ -110,37 +106,28 @@ public:
       testDenoms.push_back(testDenom);
       float testValue = getScoreWithGivenDenominations(testDenoms);
 
-      // cout<<"testValue: "<<testValue<<endl;
-      // cout<<"testDenoms:"<<endl;
-      // printV(testDenoms);
-
       if (testValue < currScore){
         rankList.push_back(make_pair(testValue, testDenom));
       }
     }
-    sort(rankList.begin(), rankList.end(), Cmp<pair<float, int>>());
-    vector<pair<float, int>>::const_iterator first = rankList.begin();
+    sort(rankList.begin(), rankList.end(), Cmp<pair<float, int>>()); //sort the vector of pair
+
+    vector<pair<float, int>>::const_iterator first = rankList.begin(); //to get the top sublist
     vector<pair<float, int>>::const_iterator last = rankList.begin() + numTry;
     vector<pair<float, int>> topRankList(first, last);
     return topRankList;
   }
 
+  // minimize the score. recurssively trying all possibilities
   pair <float, vector<int>> findOptimalDenoms(vector<int> denoms) {
-    // minimize the score. recurssively trying all possibilities
-    int currScore = getScoreWithGivenDenominations(denoms);
-    // cout<<"currScore: "<<currScore<<endl;
-    if (denoms.size() < numDoms) {
+    int currScore = getScoreWithGivenDenominations(denoms); //current score of current demonination list
+    if (denoms.size() < numDoms) { //current denoms is less than numDoms, keep trring
       vector<pair<float, int>> rankList = getTheTopTries(denoms, currScore);
-
-      // cout<<"hello"<<endl;
-      // cout<<rankList[0].first<<endl;
-      // cout<<rankList[0].second<<endl;
-
-      for (int idx=1; idx<rankList.size(); idx++){
-        int testValue = rankList[idx].first;
+      for (int idx=1; idx<rankList.size(); idx++){ //each elem in rankList potentionaly will be better solution
+        // int testScore = rankList[idx].first;
         int testDenom = rankList[idx].second;
         vector<int> testDenoms = denoms;
-        testDenoms.push_back(testDenom);
+        testDenoms.push_back(testDenom); //add new possible 
         findOptimalDenoms(testDenoms);
       }
     } else {
