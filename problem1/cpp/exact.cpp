@@ -8,6 +8,7 @@
 #include <queue>
 #include <math.h>
 #include <float.h>
+#include <algorithm>    // std::min
 
 using namespace std;
 
@@ -35,9 +36,29 @@ public:
       return 0;
     }
     vector<int> changeArray(maxChange, 0);
-    bestExactChange = INT_MAX;
 
+    printArray(changeArray);
 
+    for(int idx=0; idx<changeArray.size(); idx++) {
+      int changeAmount = idx + 1;
+      int bestExactChange = INT_MAX;
+      if (changeAmount == 1) {
+        changeArray[idx] = 1;
+      }
+      else {
+        for (int idx_denom=0; idx_denom<Denoms.size(); idx_denom++) {
+          int eachDenom = Denoms[idx_denom];
+          int amountDiff = changeAmount - eachDenom;
+          if (amountDiff > 0) {
+            bestExactChange = min(bestExactChange, changeArray[amountDiff-1] + 1);
+          }
+          else if (amountDiff == 0) {
+            bestExactChange = 1;
+          }
+        }
+        changeArray[idx] = bestExactChange;
+      }
+    }
     printArray(changeArray);
     return 1;
   }
