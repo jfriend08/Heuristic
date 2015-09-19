@@ -19,7 +19,7 @@ private:
   int numDoms = 7; //num of denomaitions need to design
   float bestScore = FLT_MAX; //store the current best score
   vector<int> bestDenoms; //store the best score's corresponding denomaitions
-  int numTry = 3; //number of possible values to hold at each level
+  int numTry = 7; //number of possible values to hold at each level
 
 public:
   Solution(float x): N(x) {} // constructor definition.
@@ -165,12 +165,19 @@ int main(int argc, char *argv[]){
     cout<< "Usage: " << argv[0] << " N" <<endl;
     return 1;
   }
-	Solution sol(atof(argv[1])); //init the N value
+
+  Solution sol(atof(argv[1])); //init the N value
+
   vector<int> myV(1,1); // denominations should most have 1
-  cout<< sol.getScoreWithGivenDenominations(myV)<<endl;
-  pair<float, vector<int>> result = sol.findOptimalDenoms(myV);
+
+  cout<< sol.getScoreWithGivenDenominations(myV)<<endl; //just testing the score correctness, diven only 1 denomination
+
+  pair<float, vector<int>> result = sol.findOptimalDenoms(myV); //start to guess the actual denominations
   cout<<"bestScore: "<<result.first<<endl;
   sol.printV(result.second);
+
+  cout<<"recalculate the socre"<<endl; //just to confirm
+  cout<< sol.getScoreWithGivenDenominations(result.second)<<endl;
 
 }
 
