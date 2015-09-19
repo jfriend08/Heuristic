@@ -15,8 +15,8 @@ using namespace std;
 class Solution {
 private:
   float N; //will be assign. Penalty of multiple of 5
-  int maxChange = 239; //max change of english pound
-  int numDoms = 7; //num of denomaitions need to design
+  int maxChange = 99; //max change of english pound
+  int numDoms = 5; //num of denomaitions need to design
   float bestScore = FLT_MAX; //store the current best score
   static vector<int> bestDenoms; //store the best score's corresponding denomaitions
   int numTry = 3; //number of possible values to hold at each level
@@ -74,10 +74,11 @@ public:
       if ((idx + 1) % 5 == 0) {
         changeArray[idx] = changeArray[idx] * N;
       }
+      finalScore += changeArray[idx];
     }
     printArray(changeArray);
 
-    return 1;
+    return finalScore;
   }
 
 };
@@ -89,10 +90,9 @@ int main(int argc, char *argv[]){
     cout<< "Usage: " << argv[0] << " N" <<endl;
     return 1;
   }
-	Solution sol(atof(argv[1]));
-  vector<int> myV(1,1);
-  sol.getScoreWithGivenDenominations(myV);
-
+	Solution sol(atof(argv[1])); //init the N value
+  vector<int> myV(1,1); // denominations should most have 1
+  cout<< sol.getScoreWithGivenDenominations(myV)<<endl;
 
 }
 

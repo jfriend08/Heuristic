@@ -7,6 +7,7 @@ pids
 *.pid
 *.seed
 .Rhistory
+*.out
 
 # Compiled JS file
 static/restaurant/index*.js
@@ -36,7 +37,6 @@ node_modules
 
 # Users Environment Variables
 .lock-wscript
-
 *.zip
 
 # Dockerfile should be copied from config folder.
