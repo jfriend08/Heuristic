@@ -25,6 +25,7 @@ public:
   Solution(float x): N(x) {} // constructor definition.
 
   void printArray(vector<int> inputArray) {
+    //nothing special. just print int vector with ideal format
     for (int i=0; i<inputArray.size(); i++) {
       cout<<inputArray[i]<< " ";
     }
@@ -32,23 +33,31 @@ public:
   }
 
   float getScoreWithGivenDenominations(vector<int> Denoms) {
+    //input denomination list, then calculate changeArray, and then return the score
     if (Denoms.empty()) {
       return 0;
     }
-    vector<int> changeArray(maxChange, 0);
 
+    vector<int> changeArray(maxChange, 0); //create array of each change amount. each value is the num of exhange of that amount
+    int changeAmount; //each of the change amout that neet to get the number of coins
+    int bestExactChange; //minimized number of coins of each changeAmount
+    int eachDenom; //each denomination(or coin) in the given Denoms vector
+    int amountDiff; //definition: changeAmount-eachDenom
+    int finalScore = 0; //the sum number of changeArray, with panality(N) considered
     printArray(changeArray);
 
+    //get changeArray with given denoms vector
     for(int idx=0; idx<changeArray.size(); idx++) {
-      int changeAmount = idx + 1;
-      int bestExactChange = INT_MAX;
+      changeAmount = idx + 1;
+      bestExactChange = INT_MAX;
       if (changeAmount == 1) {
         changeArray[idx] = 1;
       }
       else {
         for (int idx_denom=0; idx_denom<Denoms.size(); idx_denom++) {
-          int eachDenom = Denoms[idx_denom];
-          int amountDiff = changeAmount - eachDenom;
+          // always need to add up one coin. dynamic programmingly check previous results and find the best one
+          eachDenom = Denoms[idx_denom];
+          amountDiff = changeAmount - eachDenom;
           if (amountDiff > 0) {
             bestExactChange = min(bestExactChange, changeArray[amountDiff-1] + 1);
           }
@@ -60,6 +69,14 @@ public:
       }
     }
     printArray(changeArray);
+
+    for(int idx=0; idx<changeArray.size(); idx++) {
+      if ((idx + 1) % 5 == 0) {
+        changeArray[idx] = changeArray[idx] * N;
+      }
+    }
+    printArray(changeArray);
+
     return 1;
   }
 
