@@ -27,7 +27,7 @@ public:
   void printV(vector<int> inputV) {
     //nothing special. just print int vector with ideal format
     for (int i=0; i<inputV.size(); i++) {
-      cout<<inputV[i]<< " ";
+      cout<<i+1<<": "<<inputV[i]<< " ";
     }
     cout<<endl;
   }
@@ -89,15 +89,12 @@ public:
           continue;
         }
         minExchange = min(minExchange, changeArray[exceedAmount-1] + changeArray[exceedAmount-amount-1]);
-        exchangeArray[idx] = minExchange;
       }
+      exchangeArray[idx] = minExchange;
     }
 
     printV(changeArray);
     printV(exchangeArray);
-
-    cout<< changeArray[42]<<endl;
-    cout<< exchangeArray[42]<<endl;
 
     // make panality for multiple of 5 and then add up the score
     for(int idx=0; idx<changeArray.size(); idx++) {
