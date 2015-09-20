@@ -71,7 +71,6 @@ public:
 
     //get exchangeArray with given denoms vector
     for(int idx=0; idx<changeArray.size(); idx++) {
-      int testAmount;
       int exceedAmount;
       int amount = idx + 1;
       int minExchange = changeArray[idx];
@@ -80,18 +79,20 @@ public:
 
         //find the cloest mutiply of each denomination that's greater than the change
         if (amount % eachDenom == 0) {
-          testAmount = (amount/eachDenom) * eachDenom;
+          exceedAmount = (amount/eachDenom) * eachDenom;
         } else {
-          testAmount = (int(amount/eachDenom)+1) * eachDenom;
+          exceedAmount = (int(amount/eachDenom)+1) * eachDenom;
         }
 
-        if (testAmount < maxChange) {
-          exceedAmount = testAmount;
+        if (exceedAmount < maxChange && exceedAmount-amount > 0) {
+          minExchange = min(minExchange, changeArray[exceedAmount-1] + changeArray[exceedAmount-amount-1]);
+        } else if (amount == maxChange) {
+          minExchange = min(minExchange, changeArray[0]);
         } else {
           continue;
         }
         //new possibility: num of coin of that exceedAmount + num of coin of that change (which is exceedAmount-amount)
-        minExchange = min(minExchange, changeArray[exceedAmount-1] + changeArray[exceedAmount-amount-1]);
+        // minExchange = min(minExchange, changeArray[exceedAmount-1] + changeArray[exceedAmount-amount-1]);
       }
       exchangeArray[idx] = minExchange;
     }
