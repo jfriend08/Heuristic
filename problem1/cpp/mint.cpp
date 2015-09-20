@@ -15,8 +15,8 @@ using namespace std;
 class Solution {
 private:
   float N; //will be assign. Penalty of multiple of 5
-  int maxChange = 99; //max change of english pound
-  int numDoms = 5; //num of denomaitions need to design
+  int maxChange = 239; //max change of english pound
+  int numDoms = 7; //num of denomaitions need to design
   float bestScore = FLT_MAX; //store the current best score
   vector<int> bestDenoms; //store the best score's corresponding denomaitions
   int numTry = 7; //number of possible values to hold at each level
@@ -45,7 +45,8 @@ public:
     int bestExactChange; //minimized number of coins of each changeAmount
     int eachDenom; //each denomination(or coin) in the given Denoms vector
     int amountDiff; //definition: changeAmount-eachDenom
-    int finalScore = 0; //the sum number of changeArray, with panality(N) considered
+    int finalScore_exact = 0; //the sum number of changeArray, with panality(N) considered
+    int finalScore_exchange = 0; //the sum number of exchangeArray, with panality(N) considered
 
     //get changeArray with given denoms vector
     for(int idx=0; idx<changeArray.size(); idx++) {
@@ -70,6 +71,7 @@ public:
       }
     }
 
+    //get exchangeArray with given denoms vector
     for(int idx=0; idx<changeArray.size(); idx++) {
       int testAmount;
       int exceedAmount;
@@ -77,6 +79,8 @@ public:
       int minExchange = changeArray[idx];
       for (int idx_denom=0; idx_denom<denoms.size(); idx_denom++){
         eachDenom = denoms[idx_denom];
+
+        //find the cloest mutiply of each denomination that's greater than the change
         if (amount % eachDenom == 0) {
           testAmount = (amount/eachDenom) * eachDenom;
         } else {
@@ -88,22 +92,25 @@ public:
         } else {
           continue;
         }
+        //new possibility: num of coin of that exceedAmount + num of coin of that change (which is exceedAmount-amount)
         minExchange = min(minExchange, changeArray[exceedAmount-1] + changeArray[exceedAmount-amount-1]);
       }
       exchangeArray[idx] = minExchange;
     }
 
-    printV(changeArray);
-    printV(exchangeArray);
+    // printV(changeArray);
+    // printV(exchangeArray);
 
     // make panality for multiple of 5 and then add up the score
     for(int idx=0; idx<changeArray.size(); idx++) {
       if ((idx + 1) % 5 == 0) {
         changeArray[idx] = changeArray[idx] * N;
+        exchangeArray[idx] = exchangeArray[idx] * N;
       }
-      finalScore += changeArray[idx];
+      finalScore_exact += changeArray[idx];
+      finalScore_exchange += exchangeArray[idx];
     }
-    return finalScore;
+    return finalScore_exact + finalScore_exchange;
   }
 
   //check given element x is existed in the vetor
@@ -184,17 +191,17 @@ int main(int argc, char *argv[]){
 
   Solution sol(atof(argv[1])); //init the N value
 
-  // vector<int> myV(1,1); // denominations should most have 1
-  vector<int> myV { 1, 5, 10, 25, 50 }; // denominations should most have 1
+  vector<int> myV(1,1); // denominations should most have 1
+  // vector<int> myV { 1, 5, 10, 25, 50 }; // US denominations
 
   cout<< sol.getScoreWithGivenDenominations(myV)<<endl; //just testing the score correctness, diven only 1 denomination
 
-  // pair<float, vector<int>> result = sol.findOptimalDenoms(myV); //start to guess the actual denominations
-  // cout<<"bestScore: "<<result.first<<endl;
-  // sol.printV(result.second);
+  pair<float, vector<int>> result = sol.findOptimalDenoms(myV); //start to guess the actual denominations
+  cout<<"bestScore: "<<result.first<<endl;
+  sol.printV(result.second);
 
-  // cout<<"recalculate the socre"<<endl; //just to confirm
-  // cout<< sol.getScoreWithGivenDenominations(result.second)<<endl;
+  cout<<"recalculate the socre"<<endl; //just to confirm
+  cout<< sol.getScoreWithGivenDenominations(result.second)<<endl;
 
 }
 
