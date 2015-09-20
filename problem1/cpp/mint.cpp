@@ -54,16 +54,14 @@ public:
       bestExactChange = INT_MAX;
       if (changeAmount == 1) {
         changeArray[idx] = 1;
-      }
-      else {
+      } else {
         for (int idx_denom=0; idx_denom<denoms.size(); idx_denom++) {
           // always need to add up one coin. dynamic programmingly check previous results and find the best one
           eachDenom = denoms[idx_denom];
           amountDiff = changeAmount - eachDenom;
           if (amountDiff > 0) {
             bestExactChange = min(bestExactChange, changeArray[amountDiff-1] + 1);
-          }
-          else if (amountDiff == 0) {
+          } else if (amountDiff == 0) {
             bestExactChange = 1;
           }
         }
