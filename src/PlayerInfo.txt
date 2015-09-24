@@ -1,5 +1,6 @@
 # This file contains the port numbers of all the registered players of this game
 
-AI1 = 8002
-AI2 = 8003
+AI1 = 8001
+AI2 = 8002
+ClassMate = 8000
 
