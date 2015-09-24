@@ -14,6 +14,7 @@ public class AIContestant extends NoTippingPlayer{
     private List<Integer> weights;
     private List<Weight> weights_on_board;
     private int[] board;
+    private boolean firstRemove;
 
     AIContestant(int port) {
         super(port);
@@ -35,6 +36,7 @@ public class AIContestant extends NoTippingPlayer{
             weights_on_board.add(new Weight(3, -4, 1));
             board = new int[50];
             board[-4+25] = 3;
+            firstRemove = false;
         }
         StringTokenizer tk = new StringTokenizer(command);
 
@@ -47,6 +49,7 @@ public class AIContestant extends NoTippingPlayer{
         // player 1
         if (position == 0 && weight == 0) {
             this.player = 0;
+            firstRemove = true;
         } else {
             // execute previous player's move
             if (command.equals("ADDING")) {
@@ -56,8 +59,9 @@ public class AIContestant extends NoTippingPlayer{
                 // The last user add will end up with the following message
                 // REMOVING position weight
                 // we must add the position and weight as player 1 before removing.
-                if (weights_on_board.size() == 30) {
+                if (weights_on_board.size() == 30 && firstRemove) {
                     weights_on_board.add(new Weight(weight, position, (player + 1) % 2));
+                    firstRemove = false;
                 } else {
                     removeWeight(weights_on_board, position, weight);
                 }
@@ -128,7 +132,7 @@ public class AIContestant extends NoTippingPlayer{
             }
         }
         for (Weight w: remove_candidate) {
-            if (canRemove(w, remove_candidate)) {
+            if (canRemove(w, weights_on_board)) {
                 random_candidate.add(w);
             }
         }
@@ -163,11 +167,13 @@ public class AIContestant extends NoTippingPlayer{
     }
 
     private void removeWeight(List<Weight> weights_on_board, int pos, int weight) {
-        for (Weight w: weights_on_board) {
+        Weight retW = new Weight(0, 0, 0);
+        for (Weight w : weights_on_board) {
             if (w.position == pos && w.weight == weight) {
-                weights_on_board.remove(w);
+               retW = w;
             }
         }
+        weights_on_board.remove(retW);
     }
 
     private boolean verifyGameNotOver(List<Weight> weights_on_board) {
