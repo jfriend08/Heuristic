@@ -56,6 +56,8 @@ public class NoTippingComponent
     private int phase, num_on_grass, who_lost;
     private BufferedImage image;
     private HelpFrame help_frame;
+    private int most_recent_position = 0;
+    private int most_recent_weight = 0;
 
     private Rectangle computeRectangle(Weight w) {
         int h = w.w*2 + 17;
@@ -78,7 +80,10 @@ public class NoTippingComponent
     public void actionPerformed(ActionEvent e) {
         System.out.println("actionPerformed(" + e.getActionCommand() + ")");
         if (e.getActionCommand().equals("Connect")) {
-            if (red!=null && blue != null) {
+            System.out.println("hi");
+            System.out.println(red);
+            System.out.println(blue);
+            if (red != null && blue != null) {
                 try {
                     startGame();
                 } catch (Exception ev) {
@@ -120,7 +125,8 @@ public class NoTippingComponent
             // repaint();
 
         } else if (e.getActionCommand().equals("Restart")) {
-
+            most_recent_position = 0;
+            most_recent_weight = 0;
             begin();
             update(getGraphics());
             return;
@@ -426,7 +432,7 @@ public class NoTippingComponent
             if (w.do_draw && (!game_over || w.place == 1)) {
                 g2.fillRect(r.x, r.y, r.width, r.height);
                 g2.setColor(new Color(255, 255, 255));
-                g2.drawString(Integer.toString(w.w), r.x+2, r.y+r.height-2);
+                g2.drawString(Integer.toString(w.w), r.x + 2, r.y + r.height - 2);
             }
         }
 
@@ -573,7 +579,7 @@ public class NoTippingComponent
         }
 
         int i;
-        for (i=-10; i<=10; i++) {
+        for (i=-25; i<=25; i++) {
             Rectangle r = new Rectangle(screen_x(i)-meter/2, top, meter, 50);
             if (r.contains(p)) {
                 // check that there isn't already a weight here
@@ -592,7 +598,7 @@ public class NoTippingComponent
                 w.place = 1;
                 w.position = i;
                 moves.push(new Move(weight_selected, whose_turn, -1));
-                if (moves.size() == 14) phase++;
+                if (moves.size() == 30) phase++;
                 whose_turn = 1 - whose_turn;
                 break;
             }
@@ -678,7 +684,8 @@ public class NoTippingComponent
     }
 
     private void startGame() throws Exception {
-        actionPerformed(new ActionEvent(this, (int)System.currentTimeMillis(), "Restart"));
+        System.out.println("Start Game");
+        actionPerformed(new ActionEvent(this, (int) System.currentTimeMillis(), "Restart"));
         redTime = 0;
         blueTime = 0;
         long moveTime;
@@ -687,9 +694,9 @@ public class NoTippingComponent
             long t2 = readMove();
             moveTime = t2 - t1;
             if (color(whose_turn).equals("Red"))
-                blueTime+=moveTime;
+                blueTime += moveTime;
             else
-                redTime+=moveTime;
+                redTime += moveTime;
             if (redTime > timeAllowed) {// If red loses
                 who_lost = 0;
                 game_over = true;
@@ -716,11 +723,12 @@ public class NoTippingComponent
             send("ADDING");
         else
             send("REMOVING");
-        for (int i=0; i<weights.size(); i++) {
-            w = (Weight)weights.get(i);
-            if (w.do_draw)
-                send(w.place+" "+w.position+" "+color(w.whose)+" "+w.w);
-        }
+//        for (int i=0; i<weights.size(); i++) {
+//            w = (Weight)weights.get(i);
+//            if (w.do_draw)
+//                send(this.most_recent_position + " " + this.most_recent_weight);
+//        }
+        send(this.most_recent_position + " " + this.most_recent_weight);
         send("STATE END");
         return System.currentTimeMillis();
     }
@@ -736,6 +744,8 @@ public class NoTippingComponent
         StringTokenizer st = new StringTokenizer(move);
         position = Integer.parseInt(st.nextToken());
         weight = Integer.parseInt(st.nextToken());
+        this.most_recent_position = position;
+        this.most_recent_weight = weight;
         Weight w = getWeight(weight, (phase==1)?position:0);
         if (w == null)// No weight exists
             return Integer.MAX_VALUE;// Make this player lose
@@ -767,7 +777,7 @@ public class NoTippingComponent
         double dx = x2-x1, dy = y2 - y1, d12y = (y1 + y2) / 2;
         double vx = dx / t, vy = dy / t;
         while (true) {// Move the block down half the way
-            Thread.sleep(30);
+            Thread.sleep(1);
             if (!Player.noDelay()) {
                 if (Math.abs(cy - d12y) > 3)
                     cy += vy * 30;
@@ -782,7 +792,7 @@ public class NoTippingComponent
                 break;
         }
         while (true) {// Move across above the drop off point
-            Thread.sleep(30);
+            Thread.sleep(1);
             if (!Player.noDelay()) {
                 if (Math.abs(cx - x2) > 3)
                     cx += vx * 30;
@@ -797,7 +807,7 @@ public class NoTippingComponent
                 break;
         }
         while (true) {// Drop it down
-            Thread.sleep(30);
+            Thread.sleep(1);
             if (!Player.noDelay()) {
                 if (Math.abs(cy - y2) > 3)
                     cy += vy * 30;

@@ -1,5 +1,6 @@
 
 import java.io.*;
+import java.util.StringTokenizer;
 
 class Contestant extends NoTippingPlayer {
     private static BufferedReader br;
@@ -10,6 +11,7 @@ class Contestant extends NoTippingPlayer {
 
     protected String process(String command) {
         System.out.println(command);
+        StringTokenizer tk = new StringTokenizer(command);
         System.out.println("Enter move (position weight): ");
         try {
             return br.readLine();

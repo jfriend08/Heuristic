@@ -41,6 +41,7 @@ public abstract class NoTippingPlayer {
                     continue;
                 }
                 state.append(command+"\n");
+//                System.out.println(command);
             }
         }
         catch (IOException io) {
