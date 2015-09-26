@@ -21,7 +21,7 @@ private:
   vector<vector<int> > distanceMap;
 
 public:
-  Solution(int x): numCity(x) {
+  Solution(int x): numCity(x), bestScore(FLT_MAX) {
     distanceMap.resize(x);
     for (int i = 0; i < x; ++i){
       distanceMap[i].resize(x);
@@ -53,9 +53,6 @@ public:
   }
 
   float getDistance(vector<int> orig, vector<int> dest){
-    cout<<"getDistance"<<endl;
-    printV(orig);
-    printV(dest);
     long long int sqSum = 0;
     for (int i=1; i<4; i++){
       sqSum += pow(orig[i]-dest[i],2);
@@ -74,18 +71,19 @@ public:
       int endCityID = endCity[0];
       float dis = distanceMap[startCityID-1][endCityID-1];
       if (dis==0) {
+        cout<<"not calculated"<<endl;
         dis = getDistance(startCity, endCity);
         distanceMap[startCityID-1][endCityID-1] = dis;
         distanceMap[endCityID-1][startCityID-1] = dis;
       }
-      cout<<"curTotalDis: "<<curTotalDis<<" dis: "<<dis<<endl;
-      printDistanceMap();
+      // cout<<"curTotalDis: "<<curTotalDis<<" dis: "<<dis<<endl;
+      // printDistanceMap();
       curTotalDis += dis;
     }
     return curTotalDis;
   }
 
-  vector<vector<int> > getRandCityOrder(vector<vector<int> > & allCity){
+  vector<vector<int> > getRandCityOrder(vector<vector<int> > allCity){
     int city_idx1, city_idx2;
     int numIteration = allCity.size();
     map <int, bool> haveSeen;
@@ -103,7 +101,32 @@ public:
     }
     return cityOrder;
   }
+  vector<vector<int> > swapCities(int city_idx1, int city_idx2, vector<vector<int> > allCity) {
+    // given the vector and indixes, return the swaped vector
+    vector<int> tmpV = allCity[city_idx1];
+    allCity[city_idx1] = allCity[city_idx2];
+    allCity[city_idx2] = tmpV;
+    return allCity;
+  }
 
+  void findBestRout(vector<vector<int> > allCity){
+    srand (time(NULL)); /* initialize random seed: */
+    vector<vector<int> > randCity= getRandCityOrder(allCity);
+    float bestScore = getTotalDist(randCity);
+    printDistanceMap();
+    vector<vector<int> > swapCity = swapCities(0,2,randCity);
+    float swapScore = getTotalDist(swapCity);
+    printDistanceMap();
+
+    for (int i=0; i<3; i++){
+      int city_idx1 = rand() % allCity.size();
+      int city_idx2 = rand() % allCity.size();
+      cout<<"city_idx1: "<<city_idx1<<endl;
+      cout<<"city_idx2: "<<city_idx2<<endl;
+      cout<<"------------"<<endl;
+    }
+
+  }
 
 
 };
@@ -112,7 +135,7 @@ public:
 
 
 int main(int argc, char **argv) {
-  const int numCity = 4;
+  const int numCity = 9;
   Solution sol(numCity); //init the numCity
 
   int cityID, x_loc, y_loc, z_loc, count = 0;
@@ -131,11 +154,9 @@ int main(int argc, char **argv) {
 
 
 
-  // vector<int> randCities = sol.getRandCityOrder(allCity);
-  vector<vector<int> > randCity= sol.getRandCityOrder(allCity);
-  // sol.printVV(randCity);
-  cout<<sol.getTotalDist(randCity)<<endl;
-  // sol.getTotalDist(sol.getRandCityOrder(allCity));
+
+  sol.findBestRout(allCity);
+
 
   return 0;
 }
