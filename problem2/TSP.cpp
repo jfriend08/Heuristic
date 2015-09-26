@@ -18,7 +18,7 @@ class Solution {
 private:
   int numCity;
   float bestScore;
-  vector<vector<int> > distanceMap;
+  vector<vector<float> > distanceMap;
 
 public:
   Solution(int x): numCity(x), bestScore(FLT_MAX) {
@@ -111,20 +111,29 @@ public:
 
   void findBestRout(vector<vector<int> > allCity){
     srand (time(NULL)); /* initialize random seed: */
-    vector<vector<int> > randCity= getRandCityOrder(allCity);
-    float bestScore = getTotalDist(randCity);
-    printDistanceMap();
-    vector<vector<int> > swapCity = swapCities(0,2,randCity);
-    float swapScore = getTotalDist(swapCity);
-    printDistanceMap();
+    vector<vector<int> > cityOrder= getRandCityOrder(allCity);
+    float bestScore = getTotalDist(cityOrder);
 
-    for (int i=0; i<3; i++){
+    for (int i=0; i<1000; i++) {
       int city_idx1 = rand() % allCity.size();
       int city_idx2 = rand() % allCity.size();
       cout<<"city_idx1: "<<city_idx1<<endl;
       cout<<"city_idx2: "<<city_idx2<<endl;
-      cout<<"------------"<<endl;
+
+      vector<vector<int> > swapCity = swapCities(city_idx1,city_idx2,cityOrder);
+      float swapScore = getTotalDist(swapCity);
+      if (swapScore<bestScore) {
+        cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
+        cityOrder = swapCity;
+        bestScore = swapScore;
+        printDistanceMap();
+      }
+      cout<<"------------------------"<<endl;
     }
+
+    cout<<"Finished. bestScore: "<< bestScore<<endl;
+    cout<<"cityOrder: "<<endl;
+    printVV(cityOrder);
 
   }
 
