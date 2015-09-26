@@ -79,6 +79,7 @@ public:
         distanceMap[endCityID-1][startCityID-1] = dis;
       }
       cout<<"curTotalDis: "<<curTotalDis<<" dis: "<<dis<<endl;
+      printDistanceMap();
       curTotalDis += dis;
     }
     return curTotalDis;
