@@ -18,7 +18,7 @@ class Solution {
 private:
   int numCity;
   float bestScore;
-  vector<vector<int>> distanceMap;
+  vector<vector<int> > distanceMap;
 
 public:
   Solution(int x): numCity(x) {
@@ -39,7 +39,7 @@ public:
     cout<<"]"<<endl;
   }
   void printVV(vector<vector<int> > myVV){
-    for(vector<vector<int>>::iterator it = myVV.begin(); it != myVV.end(); it++) {
+    for(vector<vector<int> >::iterator it = myVV.begin(); it != myVV.end(); it++) {
       printV(*it);
     }
   }
@@ -58,14 +58,16 @@ public:
     printV(dest);
     long long int sqSum = 0;
     for (int i=1; i<4; i++){
-      sqSum += (orig[i]-dest[i])^2;
+      sqSum += pow(orig[i]-dest[i],2);
     }
     return sqrt(sqSum);
   }
 
-  float getTotalDist(vector<vector<int>> cityOrder) {
+  float getTotalDist(vector<vector<int> > cityOrder) {
+    cout<<"start getTotalDist. All cities are:"<<endl;
+    printVV(cityOrder);
     float curTotalDis = 0.0;
-    for(vector<vector<int>>::iterator it = cityOrder.begin(); it != cityOrder.end()-1; it++) {
+    for(vector<vector<int> >::iterator it = cityOrder.begin(); it != cityOrder.end()-1; it++) {
       vector<int> startCity = *it;
       vector<int> endCity = *(it+1);
       int startCityID = startCity[0];
@@ -82,7 +84,7 @@ public:
     return curTotalDis;
   }
 
-  vector<vector<int>> getRandCityOrder(vector<vector<int> > & allCity){
+  vector<vector<int> > getRandCityOrder(vector<vector<int> > & allCity){
     int city_idx1, city_idx2;
     int numIteration = allCity.size();
     map <int, bool> haveSeen;
@@ -109,7 +111,7 @@ public:
 
 
 int main(int argc, char **argv) {
-  const int numCity = 1000;
+  const int numCity = 4;
   Solution sol(numCity); //init the numCity
 
   int cityID, x_loc, y_loc, z_loc, count = 0;
@@ -129,7 +131,7 @@ int main(int argc, char **argv) {
 
 
   // vector<int> randCities = sol.getRandCityOrder(allCity);
-  vector<vector<int>> randCity= sol.getRandCityOrder(allCity);
+  vector<vector<int> > randCity= sol.getRandCityOrder(allCity);
   // sol.printVV(randCity);
   cout<<sol.getTotalDist(randCity)<<endl;
   // sol.getTotalDist(sol.getRandCityOrder(allCity));
