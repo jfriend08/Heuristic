@@ -1,0 +1,20 @@
+Anealing:
+float T = 10000, T_min = 0.00001, alpha = 0.999;
+Finished. bestScore: 6.00022e+06
+real	0m24.366s
+user	0m24.032s
+sys	0m0.130s
+
+
+
+
+
+Simple SWAP:
+float T = 10000, T_min = 0.00001, alpha = 0.999;
+Finished. bestScore: 5.91872e+06
+real	0m25.175s
+user	0m24.440s
+sys	0m0.379s
+
+
+float T = 100000, T_min = 0.00001, alpha = 0.9999;

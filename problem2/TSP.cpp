@@ -61,8 +61,8 @@ public:
   }
 
   float getTotalDist(vector<vector<int> > cityOrder) {
-    cout<<"start getTotalDist. All cities are:"<<endl;
-    printVV(cityOrder);
+    // cout<<"start getTotalDist. All cities are:"<<endl;
+    // printVV(cityOrder);
     float curTotalDis = 0.0;
     for(vector<vector<int> >::iterator it = cityOrder.begin(); it != cityOrder.end()-1; it++) {
       vector<int> startCity = *it;
@@ -71,7 +71,7 @@ public:
       int endCityID = endCity[0];
       float dis = distanceMap[startCityID-1][endCityID-1];
       if (dis==0) {
-        cout<<"not calculated"<<endl;
+        // cout<<"not calculated"<<endl;
         dis = getDistance(startCity, endCity);
         distanceMap[startCityID-1][endCityID-1] = dis;
         distanceMap[endCityID-1][startCityID-1] = dis;
@@ -108,10 +108,13 @@ public:
     allCity[city_idx2] = tmpV;
     return allCity;
   }
+  float acceptance_probability(float newDist, float oldDist,float T) {
+    return exp((oldDist-newDist)/T);
+  }
 
   void findBestRout(vector<vector<int> > allCity){
     srand (time(NULL)); /* initialize random seed: */
-    float T = 1000.0, T_min = 0.00001, alpha = 0.999;
+    float T = 100000, T_min = 0.00001, alpha = 0.9999;
     int count;
 
     vector<vector<int> > cityOrder= getRandCityOrder(allCity);
@@ -120,25 +123,35 @@ public:
     while(T > T_min) {
       int city_idx1 = rand() % allCity.size();
       int city_idx2 = rand() % allCity.size();
-      cout<<"city_idx1: "<<city_idx1<<endl;
-      cout<<"city_idx2: "<<city_idx2<<endl;
+      // cout<<"city_idx1: "<<city_idx1<<endl;
+      // cout<<"city_idx2: "<<city_idx2<<endl;
 
       vector<vector<int> > swapCity = swapCities(city_idx1,city_idx2,cityOrder);
       float swapScore = getTotalDist(swapCity);
 
+      // float ap = acceptance_probability(swapScore, bestScore, T);
+      // float curRand = ((double) rand() / (RAND_MAX)) + 1;
+      // cout <<ap<<endl;
+      // if (ap > curRand){
+      //   cout<<"1"<<endl;
+      // } else {
+      //   cout<<"0"<<endl;
+      // }
+
+      // if (ap > curRand) {
       if (swapScore<bestScore) {
         cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
         cityOrder = swapCity;
         bestScore = swapScore;
-        printDistanceMap();
+        // printDistanceMap();
       }
-      cout<<"-----------"<<count<<"-------------"<<endl;
+      // cout<<"-----------"<<count<<"-------------"<<endl;
       T = T*alpha;
       count+=1;
     }
     cout<<"Finished. bestScore: "<< bestScore<<endl;
     cout<<"cityOrder: "<<endl;
-    printVV(cityOrder);
+    // printVV(cityOrder);
 
   }
 
@@ -149,7 +162,7 @@ public:
 
 
 int main(int argc, char **argv) {
-  const int numCity = 9;
+  const int numCity = 1000;
   Solution sol(numCity); //init the numCity
 
   int cityID, x_loc, y_loc, z_loc, count = 0;
