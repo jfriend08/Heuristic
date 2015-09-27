@@ -62,3 +62,27 @@ sys	0m2.280s
 
 Bucket with properOrder + Anealing:
 float T = 1, T_min = 0.000001, alpha = 0.99999;
+
+
+Bucket with properOrder + greedy(20 neighbor, 20 rand) + Anealing:
+float T = 1, T_min = 0.0001, alpha = 0.999;
+initial score: 2.44136e+06
+Finished. bestScore: 2.13297e+06
+real	0m12.161s
+user	0m11.721s
+sys	0m0.151s
+
+========================================================
+Original score witout any processing:
+initial score: 1.55133e+07
+
+Socre just bucketSort
+initial score: 3.5486e+06
+
+Socre with bucketSort(with greedy)
+initial score: 3.5017e+06
+
+Socre with bucketSort(with greedy)+greedy
+initial score: 5.86442e+06
+
+

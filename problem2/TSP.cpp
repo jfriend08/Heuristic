@@ -167,8 +167,7 @@ public:
     vector<vector<int> > cityOrder;
     vector<vector<vector<int> > > firstSort;
     vector<vector<vector<vector<int> > > > secondSort, thirdSort;
-    // vector<vector<vector<vector<vector<int> > > > > thirdSort;
-    // cout<<"Start firstSort"<<endl;
+
     firstSort = bucketSort(allCity, x_max, x_min, 1, false);
     // cout<<"=============================="<<endl;
 
@@ -202,7 +201,8 @@ public:
       for(int y=0; y<thirdSort[x].size(); y++) {
         // cout<<"Hi x: "<<x<<" y: "<<y<<endl;
         vector<vector<int> > curV = thirdSort[x][y];
-        // printVV(curV);
+        curV = greedyFindInitPath(curV);
+
         for (int elm=0; elm<curV.size(); elm++) {
           cityOrder.push_back(curV[elm]);
         }
@@ -212,23 +212,32 @@ public:
   }
 
   vector<vector<int> > greedyFindInitPath(vector<vector<int> > allCity) {
+  // vector<vector<int> > greedyFindInitPath(vector<vector<int> > allCity, int numRand, int numNeighbor) {
+    // cout<<"greedyFindInitPath"<<endl;
+    // printVV(allCity);
+    int numCity = allCity.size();
     vector<vector<int> > greedyCityOrder;
+    int numRand=30, numNeighbor=numCity/4;
     map <int, bool> haveSeen;
 
     srand (time(NULL)); /* initialize random seed: */
-
+    if(numCity==0){
+      return greedyCityOrder;
+    }
     int luckyCity_idx = rand() % allCity.size();
     greedyCityOrder.push_back(allCity[luckyCity_idx]);
     haveSeen[luckyCity_idx] = true;
 
     while(greedyCityOrder.size()< numCity) {
+      // cout<<"current greedyCityOrder"<<endl;
+      // printVV(greedyCityOrder);
       // cout<<"greedyCityOrder.size(): "<<greedyCityOrder.size()<<endl;
       int minDist = INT_MAX;
       int currentBestNextCity_idx;
 
       // cout<<"try neighbors first"<<endl;
       // try neighbors first
-      for (int neighbor_i=luckyCity_idx-10; neighbor_i<luckyCity_idx+10 & neighbor_i<1000; neighbor_i++){
+      for (int neighbor_i=luckyCity_idx-numNeighbor; neighbor_i<luckyCity_idx+numNeighbor & neighbor_i<numCity; neighbor_i++){
         if (neighbor_i<0 | neighbor_i>1000) { continue; } // outside boundary.
         else if (neighbor_i == luckyCity_idx) { continue; }
         else if (haveSeen[neighbor_i]) { continue; } // have been pushed
@@ -244,15 +253,14 @@ public:
             // cout<<"dis<minDist. neighbor_i: "<<neighbor_i<<endl;
             minDist = dis;
             currentBestNextCity_idx = neighbor_i;
-            // currentBestNextCity= allCity[neighbor_i];
           }
         }
       }
 
       // cout<<"try random"<<endl;
       // try random
-      int count=0;
-      while (count<20) {
+      int count = 0;
+      while (count< numRand) {
         int nextCity_idx = rand() % allCity.size();
         if (haveSeen[nextCity_idx]) {
           continue; //have been pushed
@@ -266,7 +274,6 @@ public:
           if (dis<minDist) {
             minDist = dis;
             currentBestNextCity_idx = nextCity_idx;
-            // currentBestNextCity= allCity[nextCity_idx];
           }
           count++;
         }
@@ -282,43 +289,41 @@ public:
 
   void findBestRout(vector<vector<int> > allCity, int x_max, int x_min, int y_max, int y_min, int z_max, int z_min){
     srand (time(NULL)); /* initialize random seed: */
-    float T = 1, T_min = 0.00001, alpha = 0.9999;
+    float T = 1, T_min = 0.0001, alpha = 0.999;
 
+    // vector<vector<int> > cityOrder = allCity;
     vector<vector<int> > cityOrder = sortTheCityByBucketOrder(allCity, x_max, x_min, y_max, y_min, z_max, z_min);
     cityOrder = greedyFindInitPath(cityOrder);
-    printVV(cityOrder);
-
-
+    // printVV(cityOrder);
 
     // cityOrder = getRandCityOrder(allCity);
-    float bestScore = getTotalDist(cityOrder);
+    double bestScore = getTotalDist(cityOrder);
     cout<<"initial score: " << bestScore<<endl;
-    while(T > T_min) {
-      int city_idx1 = rand() % allCity.size();
-      int city_idx2 = rand() % allCity.size();
-      vector<vector<int> > swapCity = swapCities(city_idx1,city_idx2,cityOrder);
-      float swapScore = getTotalDist(swapCity);
+    // while(T > T_min) {
+    //   int city_idx1 = rand() % allCity.size();
+    //   int city_idx2 = rand() % allCity.size();
+    //   vector<vector<int> > swapCity = swapCities(city_idx1,city_idx2,cityOrder);
+    //   float swapScore = getTotalDist(swapCity);
 
-      // float ap = acceptance_probability(swapScore, bestScore, T);
-      // float curRand = ((double) rand() / (RAND_MAX));
-      // cout <<"T: "<<T<<" curRand: "<<curRand<<" ap: "<<ap<<endl;
-      // if (ap > curRand){
-      //   cout<<"#1"<<endl;
-      // } else {
-      //   cout<<"#0"<<endl;
-      // }
-      // if (swapScore<bestScore) {
-      if (swapScore<bestScore | acceptance_probability(swapScore, bestScore, T) > ((double) rand() / (RAND_MAX))) {
-        // cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
-        cityOrder = swapCity;
-        bestScore = swapScore;
-        // printDistanceMap();
-      }
-      T = T*alpha;
-    }
-    cout<<"Finished. bestScore: "<< bestScore<<endl;
-    cout<<"cityOrder: "<<endl;
-    // printVV(cityOrder);
+    //   // float ap = acceptance_probability(swapScore, bestScore, T);
+    //   // float curRand = ((double) rand() / (RAND_MAX));
+    //   // cout <<"T: "<<T<<" curRand: "<<curRand<<" ap: "<<ap<<endl;
+    //   // if (ap > curRand){
+    //   //   cout<<"#1"<<endl;
+    //   // } else {
+    //   //   cout<<"#0"<<endl;
+    //   // }
+    //   // if (swapScore<bestScore) {
+    //   if (swapScore<bestScore | acceptance_probability(swapScore, bestScore, T) > ((double) rand() / (RAND_MAX))) {
+    //     // cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
+    //     cityOrder = swapCity;
+    //     bestScore = swapScore;
+    //     // printDistanceMap();
+    //   }
+    //   T = T*alpha;
+    // }
+    // cout<<"Finished. bestScore: "<< bestScore<<endl;
+    // // printVV(cityOrder);
 
   }
 
