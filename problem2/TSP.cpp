@@ -39,7 +39,7 @@ public:
     cout<<"]"<<endl;
   }
   void printVV(vector<vector<int> > myVV){
-    // cout<<"printVV size: " <<myVV.size()<<endl;
+    cout<<"printVV size: " <<myVV.size()<<endl;
     for(vector<vector<int> >::iterator it = myVV.begin(); it != myVV.end(); it++) {
       printV(*it);
     }
@@ -113,11 +113,34 @@ public:
     // cout<<"newDist: "<<newDist<<" oldDist: "<<oldDist<<endl;
     return exp((oldDist-newDist)/T);
   }
-
-  vector<vector<int> > bucketSort(vector<vector<int> > allCity, int max, int min, int idx) {
+  vector<int> getCoordinateBound(vector<vector<int> > allCity) {
+    int x_max=INT_MIN, y_max=INT_MIN, z_max=INT_MIN, x_min=INT_MAX, y_min=INT_MAX, z_min=INT_MAX;
+    int x_loc, y_loc, z_loc;
+    vector<int> v;
+    for (int i=0; i<allCity.size(); i++) {
+      x_loc = allCity[i][1];
+      y_loc = allCity[i][2];
+      z_loc = allCity[i][3];
+      if (x_loc > x_max) { x_max = x_loc; }
+      if (x_loc < x_min) { x_min = x_loc; }
+      if (y_loc > y_max) { y_max = y_loc; }
+      if (y_loc < y_min) { y_min = y_loc; }
+      if (z_loc > z_max) { z_max = z_loc; }
+      if (z_loc < z_min) { z_min = z_loc; }
+    }
+    v.push_back(x_max); v.push_back(x_min); v.push_back(y_max); v.push_back(y_min); v.push_back(z_max); v.push_back(z_min);
+    return v;
+  }
+  vector<vector<vector<int> > > bucketSort(vector<vector<int> > allCity, int max, int min, int idx, bool reverse) {
     vector<vector<int> > bucket1, bucket2, bucket3, bucket4, bucket5;
+    vector<vector<vector<int> > > final;
     int interval = (max - min)/5;
     cout<<"interval: "<<interval<<endl;
+
+    // if (allCity.empty()){
+    //   return final;
+    // }
+
     for (int i=0; i<allCity.size(); i++) {
       vector<int> curV = allCity[i];
       if (curV[idx] >= min && curV[idx] < min+interval) { bucket1.push_back(curV); }
@@ -126,23 +149,71 @@ public:
       else if (curV[idx] >= min+3*interval && curV[idx] < min+4*interval) { bucket4.push_back(curV); }
       else { bucket5.push_back(curV); }
     }
-    for(int i=0; i<bucket2.size(); i++ ){ bucket1.push_back(bucket2[i]); }
-    for(int i=0; i<bucket3.size(); i++ ){ bucket1.push_back(bucket3[i]); }
-    for(int i=0; i<bucket4.size(); i++ ){ bucket1.push_back(bucket4[i]); }
-    for(int i=0; i<bucket5.size(); i++ ){ bucket1.push_back(bucket5[i]); }
-
-    return bucket1;
+    if (reverse) {
+      final.push_back(bucket5);
+      final.push_back(bucket4);
+      final.push_back(bucket3);
+      final.push_back(bucket2);
+      final.push_back(bucket1);
+      // for(int i=0; i<bucket5.size(); i++ ){ final.push_back(bucket5[i]); }
+      // for(int i=0; i<bucket4.size(); i++ ){ final.push_back(bucket4[i]); }
+      // for(int i=0; i<bucket3.size(); i++ ){ final.push_back(bucket3[i]); }
+      // for(int i=0; i<bucket2.size(); i++ ){ final.push_back(bucket2[i]); }
+      // for(int i=0; i<bucket1.size(); i++ ){ final.push_back(bucket1[i]); }
+    } else {
+      final.push_back(bucket1);
+      final.push_back(bucket2);
+      final.push_back(bucket3);
+      final.push_back(bucket4);
+      final.push_back(bucket5);
+      // for(int i=0; i<bucket1.size(); i++ ){ final.push_back(bucket1[i]); }
+      // for(int i=0; i<bucket2.size(); i++ ){ final.push_back(bucket2[i]); }
+      // for(int i=0; i<bucket3.size(); i++ ){ final.push_back(bucket3[i]); }
+      // for(int i=0; i<bucket4.size(); i++ ){ final.push_back(bucket4[i]); }
+      // for(int i=0; i<bucket5.size(); i++ ){ final.push_back(bucket5[i]); }
+    }
+    return final;
   }
-
   void findBestRout(vector<vector<int> > allCity, int x_max, int x_min, int y_max, int y_min, int z_max, int z_min){
     srand (time(NULL)); /* initialize random seed: */
     float T = 1, T_min = 0.00001, alpha = 0.9999;
     int count;
     vector<vector<int> > cityOrder;
+    vector<vector<vector<int> > > firstSort;
+    vector<vector<vector<vector<int> > > > secondSort, thirdSort;
+    // vector<vector<vector<vector<vector<int> > > > > thirdSort;
 
-    cityOrder = bucketSort(allCity, x_max, x_min, 1);
-    cityOrder = bucketSort(cityOrder, y_max, y_min, 2);
-    cityOrder = bucketSort(cityOrder, z_max, z_min, 3);
+    firstSort = bucketSort(allCity, x_max, x_min, 1, false);
+
+    for (int x=0; x<firstSort.size(); x++) {
+      vector<vector<int> > curV = firstSort[x];
+      // printVV(curV);
+      bool reverse = x%2==0 ? false:true;
+      secondSort.push_back(bucketSort(curV, y_max, y_min, 2, reverse));
+    }
+
+    for(int x=0; x<secondSort.size(); x++) {
+      for(int y=0; y<secondSort[x].size(); y++) {
+        // cout<<"x: "<<x<<" y: "<<y<<endl;
+        // printVV(secondSort[x][y]);
+        // cout<<"------------------------------------"<<endl;
+        vector<vector<int> > curV = secondSort[x][y];
+        bool reverse = (x+y)%2==0 ? false:true;
+        thirdSort.push_back(bucketSort(curV, z_max, z_min, 3, reverse));
+      }
+    }
+    for(int x=0; x<thirdSort.size(); x++) {
+      for(int y=0; y<thirdSort[x].size(); y++) {
+        // cout<<"Hi x: "<<x<<" y: "<<y<<endl;
+        vector<vector<int> > curV = thirdSort[x][y];
+        // printVV(curV);
+        for (int elm=0; elm<curV.size(); elm++) {
+          cityOrder.push_back(curV[elm]);
+        }
+      }
+    }
+    // cityOrder = bucketSort(cityOrder, y_max, y_min, 2);
+    // cityOrder = bucketSort(cityOrder, z_max, z_min, 3);
     printVV(cityOrder);
 
     // cityOrder = getRandCityOrder(allCity);

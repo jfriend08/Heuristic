@@ -18,3 +18,26 @@ sys	0m0.379s
 
 
 float T = 100000, T_min = 0.00001, alpha = 0.9999;
+
+
+Bucket + Anealing
+5 bucket
+Finished. bestScore: 2.51221e+06
+real	3m34.467s
+user	3m4.552s
+sys	0m1.125s
+
+4 bucket
+Finished. bestScore: 2.4652e+06
+real	2m28.876s
+user	2m24.393s
+sys	0m1.014s
+
+3 bucket
+Finished. bestScore: 2.80765e+06
+real	2m36.727s
+user	2m33.142s
+sys	0m0.986s
+
+
+Bucket with properOrder + Anealing:
