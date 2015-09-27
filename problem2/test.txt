@@ -41,3 +41,24 @@ sys	0m0.986s
 
 
 Bucket with properOrder + Anealing:
+Finished. bestScore: 2.034e+06
+real	2m57.609s
+user	2m52.220s
+sys	0m1.323s
+
+Bucket with properOrder + noAnealing:
+Finished. bestScore: 2.10224e+06
+
+real	4m11.155s
+user	3m39.594s
+sys	0m2.311s
+
+Bucket with properOrder + Anealing:
+float T = 1, T_min = 0.000001, alpha = 0.9999;
+Finished. bestScore: 1.99527e+06
+real	4m37.833s
+user	3m39.363s
+sys	0m2.280s
+
+Bucket with properOrder + Anealing:
+float T = 1, T_min = 0.000001, alpha = 0.99999;
