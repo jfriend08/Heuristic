@@ -109,12 +109,13 @@ public:
     return allCity;
   }
   float acceptance_probability(float newDist, float oldDist,float T) {
+    // cout<<"newDist: "<<newDist<<" oldDist: "<<oldDist<<endl;
     return exp((oldDist-newDist)/T);
   }
 
   void findBestRout(vector<vector<int> > allCity){
     srand (time(NULL)); /* initialize random seed: */
-    float T = 100000, T_min = 0.00001, alpha = 0.9999;
+    float T = 1, T_min = 0.00001, alpha = 0.9999;
     int count;
 
     vector<vector<int> > cityOrder= getRandCityOrder(allCity);
@@ -129,17 +130,16 @@ public:
       vector<vector<int> > swapCity = swapCities(city_idx1,city_idx2,cityOrder);
       float swapScore = getTotalDist(swapCity);
 
-      // float ap = acceptance_probability(swapScore, bestScore, T);
-      // float curRand = ((double) rand() / (RAND_MAX)) + 1;
-      // cout <<ap<<endl;
+      float ap = acceptance_probability(swapScore, bestScore, T);
+      float curRand = ((double) rand() / (RAND_MAX));
+      // cout <<"T: "<<T<<" curRand: "<<curRand<<" ap: "<<ap<<endl;
       // if (ap > curRand){
-      //   cout<<"1"<<endl;
+      //   cout<<"#1"<<endl;
       // } else {
-      //   cout<<"0"<<endl;
+      //   cout<<"#0"<<endl;
       // }
 
-      // if (ap > curRand) {
-      if (swapScore<bestScore) {
+      if (swapScore<bestScore || ap > curRand) {
         cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
         cityOrder = swapCity;
         bestScore = swapScore;
