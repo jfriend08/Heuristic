@@ -85,4 +85,9 @@ initial score: 3.5017e+06
 Socre with bucketSort(with greedy)+greedy
 initial score: 5.86442e+06
 
+Socre with bucketSort(without greedy)+greedy
+initial score: 5.88996e+06
+
+Socre with only greedy
+initial score: 1.27021e+06
 
