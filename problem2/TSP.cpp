@@ -39,6 +39,7 @@ public:
     cout<<"]"<<endl;
   }
   void printVV(vector<vector<int> > myVV){
+    // cout<<"printVV size: " <<myVV.size()<<endl;
     for(vector<vector<int> >::iterator it = myVV.begin(); it != myVV.end(); it++) {
       printV(*it);
     }
@@ -113,12 +114,38 @@ public:
     return exp((oldDist-newDist)/T);
   }
 
-  void findBestRout(vector<vector<int> > allCity){
+  vector<vector<int> > bucketSort(vector<vector<int> > allCity, int max, int min, int idx) {
+    vector<vector<int> > bucket1, bucket2, bucket3, bucket4, bucket5;
+    int interval = (max - min)/5;
+    cout<<"interval: "<<interval<<endl;
+    for (int i=0; i<allCity.size(); i++) {
+      vector<int> curV = allCity[i];
+      if (curV[idx] >= min && curV[idx] < min+interval) { bucket1.push_back(curV); }
+      else if (curV[idx] >= min+interval && curV[idx] < min+2*interval) { bucket2.push_back(curV); }
+      else if (curV[idx] >= min+2*interval && curV[idx] < min+3*interval) { bucket3.push_back(curV); }
+      else if (curV[idx] >= min+3*interval && curV[idx] < min+4*interval) { bucket4.push_back(curV); }
+      else { bucket5.push_back(curV); }
+    }
+    for(int i=0; i<bucket2.size(); i++ ){ bucket1.push_back(bucket2[i]); }
+    for(int i=0; i<bucket3.size(); i++ ){ bucket1.push_back(bucket3[i]); }
+    for(int i=0; i<bucket4.size(); i++ ){ bucket1.push_back(bucket4[i]); }
+    for(int i=0; i<bucket5.size(); i++ ){ bucket1.push_back(bucket5[i]); }
+
+    return bucket1;
+  }
+
+  void findBestRout(vector<vector<int> > allCity, int x_max, int x_min, int y_max, int y_min, int z_max, int z_min){
     srand (time(NULL)); /* initialize random seed: */
     float T = 1, T_min = 0.00001, alpha = 0.9999;
     int count;
+    vector<vector<int> > cityOrder;
 
-    vector<vector<int> > cityOrder= getRandCityOrder(allCity);
+    cityOrder = bucketSort(allCity, x_max, x_min, 1);
+    cityOrder = bucketSort(cityOrder, y_max, y_min, 2);
+    cityOrder = bucketSort(cityOrder, z_max, z_min, 3);
+    printVV(cityOrder);
+
+    // cityOrder = getRandCityOrder(allCity);
     float bestScore = getTotalDist(cityOrder);
 
     while(T > T_min) {
@@ -130,8 +157,8 @@ public:
       vector<vector<int> > swapCity = swapCities(city_idx1,city_idx2,cityOrder);
       float swapScore = getTotalDist(swapCity);
 
-      float ap = acceptance_probability(swapScore, bestScore, T);
-      float curRand = ((double) rand() / (RAND_MAX));
+      // float ap = acceptance_probability(swapScore, bestScore, T);
+      // float curRand = ((double) rand() / (RAND_MAX));
       // cout <<"T: "<<T<<" curRand: "<<curRand<<" ap: "<<ap<<endl;
       // if (ap > curRand){
       //   cout<<"#1"<<endl;
@@ -139,8 +166,8 @@ public:
       //   cout<<"#0"<<endl;
       // }
 
-      if (swapScore<bestScore || ap > curRand) {
-        cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
+      if (swapScore<bestScore | acceptance_probability(swapScore, bestScore, T) > ((double) rand() / (RAND_MAX))) {
+        // cout<<"bestScore updated: "<< bestScore<< "==>"<< swapScore<< endl;
         cityOrder = swapCity;
         bestScore = swapScore;
         // printDistanceMap();
@@ -167,9 +194,15 @@ int main(int argc, char **argv) {
 
   int cityID, x_loc, y_loc, z_loc, count = 0;
   vector<vector<int> > allCity;
-  // map <int,int*> cityMap;
+  int x_max=INT_MIN, y_max=INT_MIN, z_max=INT_MIN, x_min=INT_MAX, y_min=INT_MAX, z_min=INT_MAX;
   while (count < numCity) {
     cin >> cityID >> x_loc >> y_loc >> z_loc;
+    if (x_loc > x_max) { x_max = x_loc;}
+    if (x_loc < x_min) { x_min = x_loc; }
+    if (y_loc > y_max) { y_max = y_loc;}
+    if (y_loc < y_min) { y_min = y_loc; }
+    if (z_loc > z_max) { z_max = z_loc;}
+    if (z_loc < z_min) { z_min = z_loc; }
     vector<int> tmpV;
     tmpV.push_back(cityID);
     tmpV.push_back(x_loc);
@@ -179,11 +212,11 @@ int main(int argc, char **argv) {
     count++;
   }
 
+  cout<<"x_max: " <<x_max <<" x_min: "<<x_min<<endl;
+  cout<<"y_max: " <<y_max <<" y_min: "<<y_min<<endl;
+  cout<<"z_max: " <<z_max <<" z_min: "<<z_min<<endl;
 
-
-
-  sol.findBestRout(allCity);
-
+  sol.findBestRout(allCity, x_max, x_min, y_max, y_min, z_max, z_min);
 
   return 0;
 }
