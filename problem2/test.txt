@@ -91,3 +91,220 @@ initial score: 5.88996e+06
 Socre with only greedy
 initial score: 1.27021e+06
 
+
+
+
+getActualPrint: 837751
+real	1m27.933s
+user	1m27.889s
+sys	0m0.023s
+
+rand->neighbor
+getActualPrint: 834345
+real	1m5.403s
+user	1m5.363s
+sys	0m0.024s
+--------------------------------------------------------
+3times of try, numRand=5000 rand->neighbor
+float T = 1, T_min = 0.01, alpha = 0.999;
+
+getActualPrint: 845911
+real	1m4.937s
+user	1m4.902s
+sys	0m0.035s
+
+bestScore update: 1.79769e+308==>836907
+initial score: 836907
+Finished. bestScore: 836907
+getActualPrint: 836907
+real	1m5.163s
+user	1m5.120s
+sys	0m0.035s
+
+getActualPrint: 837255
+bestScore update: 1.79769e+308==>864234
+bestScore update: 864234==>837402
+initial score: 837402
+Finished. bestScore: 837255
+real	1m5.016s
+user	1m4.933s
+sys	0m0.041s
+
+bestScore update: 1.79769e+308==>850334
+bestScore update: 850334==>836450
+initial score: 836450
+Finished. bestScore: 836450
+getActualPrint: 836450
+real	1m5.297s
+user	1m5.272s
+sys	0m0.018s
+
+bestScore update: 1.79769e+308==>845961
+initial score: 845961
+Finished. bestScore: 844438
+getActualPrint: 844438
+real	1m5.110s
+user	1m5.074s
+sys	0m0.024s
+
+bestScore update: 1.79769e+308==>844876
+bestScore update: 844876==>843227
+initial score: 843227
+Finished. bestScore: 843155
+getActualPrint: 843155
+real	1m5.251s
+user	1m5.114s
+sys	0m0.037s
+--------------------------------------------------------
+3times of try, numRand=5000 rand->neighbor
+float T = 1, T_min = 0.001, alpha = 0.999;
+
+bestScore update: 1.79769e+308==>855730
+bestScore update: 855730==>835071
+initial score: 835071
+Finished. bestScore: 834100
+getActualPrint: 834100
+real	1m9.414s
+user	1m9.388s
+sys	0m0.014s
+
+bestScore update: 1.79769e+308==>863584
+bestScore update: 863584==>861790
+bestScore update: 861790==>844598
+initial score: 844598
+Finished. bestScore: 844026
+getActualPrint: 844026
+real	1m8.813s
+user	1m8.703s
+sys	0m0.038s
+--------------------------------------------------------
+3times of try, numRand=5000 rand->neighbor
+float T = 1, T_min = 0.00001, alpha = 0.999;
+
+bestScore update: 1.79769e+308==>854188
+bestScore update: 854188==>840081
+initial score: 840081
+Finished. bestScore: 839056
+getActualPrint: 839056
+real	1m16.721s
+user	1m16.685s
+sys	0m0.021s
+
+bestScore update: 1.79769e+308==>881991
+bestScore update: 881991==>853372
+initial score: 853372
+Finished. bestScore: 852928
+getActualPrint: 852928
+real	1m16.895s
+user	1m16.866s
+sys	0m0.013s
+
+bestScore update: 1.79769e+308==>854230
+bestScore update: 854230==>833371
+initial score: 833371
+Finished. bestScore: 833367
+getActualPrint: 833367
+real	1m17.216s
+user	1m17.184s
+sys	0m0.017s
+
+bestScore update: 1.79769e+308==>851718
+bestScore update: 851718==>840688
+initial score: 840688
+Finished. bestScore: 840675
+getActualPrint: 840675
+real	1m18.156s
+user	1m17.788s
+sys	0m0.018s
+
+
+--------------------------------------------------------
+5times of try, numRand=5000 rand->neighbor
+float T = 1, T_min = 0.00001, alpha = 0.999;
+
+bestScore update: 1.79769e+308==>835832
+bestScore update: 835832==>834798
+initial score: 834798
+Finished. bestScore: 834165
+getActualPrint: 834165
+real	1m54.325s
+user	1m54.267s
+sys	0m0.037s
+
+bestScore update: 1.79769e+308==>837913
+initial score: 837913
+Finished. bestScore: 836651
+getActualPrint: 836651
+real	1m54.333s
+user	1m54.275s
+sys	0m0.035s
+
+--------------------------------------------------------
+4times of try, numRand=5000 rand->neighbor
+float T = 1, T_min = 0.00001, alpha = 0.999;
+exp(0.01*(oldDist-newDist)/T);
+
+bestScore update: 1.79769e+308==>859157
+bestScore update: 859157==>858010
+bestScore update: 858010==>850250
+initial score: 850250
+Finished. bestScore: 849691
+getActualPrint: 849691
+real	1m36.122s
+user	1m36.073s
+sys	0m0.027s
+
+bestScore update: 1.79769e+308==>842603
+bestScore update: 842603==>835575
+initial score: 835575
+Finished. bestScore: 833534
+getActualPrint: 833534
+real	1m35.676s
+user	1m35.544s
+sys	0m0.027s
+
+--------------------------------------------------------
+4times of try, numRand=5000 neighbor-->rand
+float T = 1, T_min = 0.00001, alpha = 0.999;
+exp(0.01*(oldDist-newDist)/T);
+
+bestScore update: 1.79769e+308==>869005
+bestScore update: 869005==>853072
+initial score: 853072
+Finished. bestScore: 852450
+getActualPrint: 852450
+real	1m39.316s
+user	1m39.277s
+sys	0m0.023s
+
+bestScore update: 1.79769e+308==>855369
+bestScore update: 855369==>854249
+initial score: 854249
+Finished. bestScore: 852764
+getActualPrint: 852764
+real	1m38.719s
+user	1m38.620s
+sys	0m0.017s
+
+--------------------------------------------------------
+4times of try, numRand=5000 rand (no neighbor)
+float T = 1, T_min = 0.00001, alpha = 0.999;
+exp(0.01*(oldDist-newDist)/T);
+
+bestScore update: 1.79769e+308==>847116
+bestScore update: 847116==>844474
+initial score: 844474
+Finished. bestScore: 844473
+getActualPrint: 844473
+real	1m34.126s
+user	1m34.085s
+sys	0m0.021s
+
+bestScore update: 1.79769e+308==>858998
+bestScore update: 858998==>829674
+initial score: 829674
+Finished. bestScore: 829548
+getActualPrint: 829548
+real	1m34.222s
+user	1m34.181s
+sys	0m0.027s

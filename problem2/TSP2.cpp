@@ -63,6 +63,18 @@ public:
     }
     return sqrt(sqSum);
   }
+  void getActualPrint(vector<vector<int> > cityOrder) {
+    float curTotalDis = 0.0;
+    for(vector<vector<int> >::iterator it = cityOrder.begin(); it != cityOrder.end()-1; it++) {
+      vector<int> startCity = *it;
+      vector<int> endCity = *(it+1);
+      int startCityID = startCity[0];
+      int endCityID = endCity[0];
+      float dis = getDistance(startCity, endCity);
+      curTotalDis += dis;
+    }
+    cout<<"getActualPrint: "<<curTotalDis<<endl;
+  }
 
   float getTotalDist(vector<vector<int> > cityOrder) {
     float curTotalDis = 0.0;
@@ -110,7 +122,7 @@ public:
   }
 
   double acceptance_probability(float newDist, float oldDist,float T) {
-    return exp(0.1*(oldDist-newDist)/T);
+    return exp(0.01*(oldDist-newDist)/T);
   }
 
   vector<int> getCoordinateBound(vector<vector<int> > allCity) {
@@ -220,10 +232,9 @@ public:
   }
 
   vector<vector<int> > greedyFindInitPath(vector<vector<int> > allCity) {
-
     int numCity = allCity.size();
     vector<vector<int> > greedyCityOrder;
-    int numRand=5000, numNeighbor=numCity/1.5;
+    int numRand=3000, numNeighbor=allCity.size()/5;
     map <int, bool> haveSeen;
 
     srand (time(NULL)); /* initialize random seed: */
@@ -279,6 +290,8 @@ public:
           count++;
         }
       }
+
+
       // cout<<"currentBestNextCity_idx: "<<currentBestNextCity_idx<<endl;
       // printV(allCity[currentBestNextCity_idx]);
       greedyCityOrder.push_back(allCity[currentBestNextCity_idx]);
@@ -291,7 +304,7 @@ public:
   }
   void findBestRout(vector<vector<int> > allCity, int x_max, int x_min, int y_max, int y_min, int z_max, int z_min){
     srand (time(NULL)); /* initialize random seed: */
-    float T = 1, T_min = 0.01, alpha = 0.999;
+    float T = 1, T_min = 0.00001, alpha = 0.999;
     int numGreedyTry = 3;
 
     double bestScore = DBL_MAX;
@@ -332,6 +345,8 @@ public:
     for (int i=0; i<cityOrder.size(); i++){
       cout<<cityOrder[i][0]<<endl;
     }
+
+    // getActualPrint(cityOrder);
   }
 
 
