@@ -1,0 +1,90 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>The NoTipping Game</title>
+</head>
+
+<body>
+
+<h1 align="center">The NoTipping Game</h1>
+<h2 align="justify">Instructions for Architect</h2>
+<ul>
+  <li>
+  <p align="justify">You will have to download the game which is a jar file
+  <a href="notippingapp.jar">here</a>.</li>
+  <li>
+  <p align="justify">It contains a file PlayerInfo.txt which you must modify to 
+  use the ports of your players.</li>
+  <li>
+  <p align="justify">Now each player should be having an assigned port, so that 
+  when you select the player, the game tries to connect to him or her.</li>
+  <li>
+  <p align="justify">ReMake the jar file by &quot;jar cvfm notippingapp.jar 
+  manifest.txt *.class *.java PlayerInfo.txt&quot;.</li>
+  <li>
+  <p align="justify">When running the program, specify hostname=localhost to 
+  connect to the ports on your local machine. This is useful for testing. 
+  specify any other hostname to connect to machines on which the competition is 
+  being held.</li>
+  <li>
+  <p align="justify">Another argument is nodelay=true, this speeds up the game 
+  by avoiding the smooth movements of weights and just drops them in place.</li>
+  <li>
+  <p align="justify">So, to run the application, something like &quot;java -jar 
+  notippingapp.jar hostname=localhost&quot; should be enough.</li>
+  <li>
+  <p align="justify">First select the second player, then the first player and 
+  then click on Connect. Red always goes first, so select the blue player first.</li>
+</ul>
+<h2 align="justify">Instructions for Player</h2>
+<ul>
+  <li>
+  <p align="justify">You will have to download the framework for your player
+  <a href="playerclient.tar.gz">here</a>.</li>
+  <li>
+  <p align="justify">It contains a file NoTippingPlayer.java which you must 
+  extend. A sample Contestant.java file is provided which allows you to play by 
+  command line instruction is provided.</li>
+  <li>
+  <p align="justify">To run the player, run it on the machine to which the 
+  application run by the architect will connect.</li>
+  <li>
+  <p align="justify">Something like &quot;java Contestant 8080&quot; would run your 
+  program on port 8080.</li>
+  <li>
+  <p align="justify">If the application (client) disconnects the connection to 
+  your player (server), the application exits.</li>
+</ul>
+<h2 align="justify">Interface Instructions for Player and Architect</h2>
+<p align="justify">The application sends the state as a set of lines in the 
+following form :-</p>
+<ul>
+  <li>
+  <p align="justify">The phase which is either &quot;ADDING&quot; or &quot;REMOVING&quot;,</li>
+  <li>
+  <p align="justify">followed by lines containing &quot;place position color weight&quot;.</li>
+  <li>
+  <p align="justify">Place is 0 for the sky, 1 for the board and 2 for the 
+  grass.</li>
+  <li>
+  <p align="justify">Position is meaningful for weights on board, otherwise 
+  ignore it.</li>
+</ul>
+<p align="justify">The player sends a move in the following form :-</p>
+<ul>
+  <li>
+  <p align="justify">A line containing &quot;position weight&quot;.</li>
+  <li>
+  <p align="justify">In the adding phase, it indicates which weight you want to 
+  move where.</li>
+  <li>
+  <p align="justify">In the removing phase, it indicates which weight is removed 
+  from where.</li>
+</ul>
+<p align="justify">&nbsp;</p>
+
+</body>
+
+</html>
