@@ -27,6 +27,11 @@ using namespace std;
 
 #define BACKLOG 1   // how many pending connections queue will hold
 
+const int left_bound = -25;
+const int right_bound = 25;
+const int minWeight = 1;
+const int maxWeight = 15;
+
 void sigchld_handler(int s)
 {
   // waitpid() might overwrite errno, so we save and restore it:
@@ -91,8 +96,7 @@ class NoTippingPlayer {
 private:
   vector<Weight*> board;
   set<int> availables;
-  int left_torq;
-  int right_torq;
+  map<int, set<int> > finalState; //Record the final state that red player is gonna lose
   bool firstPlayer;
 
   int getIdx(int i) {
@@ -105,80 +109,96 @@ private:
     for (int p = 0; p < board.size(); p++) {
       left_torq -= (board[p]->position - (-3)) * board[p]->weight;
       right_torq -= (board[p]->position - (-1)) * board[p]->weight;
+
+      left_torq += (board[p]->position - (-3)) * -1*board[p]->weight;
+      right_torq += (board[p]->position - (-1)) * -1*board[p]->weight;
     }
 
     return left_torq > 0 || right_torq < 0;
   }
-  void update(int position, int weight, bool mine) {
 
-    delete board[position];
-    board[position] = new Weight(position, weight, mine);
+  string firstPlayerAddWeight() {
+    string ret("");
 
-    if (mine) {
-      set<int>::iterator it = availables.find(weight);
-      availables.erase(it);
-    }
+    for (set<int>::reverse_iterator available = availables.rbegin(); available != availables.rend(); available++) {
+      for (map<int, set<int> >::iterator state = finalState.begin(); state != finalState.end(); state++) {
+        if (board[getIdx(state->first)]->weight)  continue;
 
-  }
-  const char* addWeight() {
-    // vector<ModeOpt*> choices;
-    for (int i = 0; i < board.size(); i++) {
-      if (board[i]->weight) {
-        continue;
+        Weight *nowPos = board[getIdx(state->first)];
+        for (set<int>::iterator it = state->second.begin(); it != state->second.end(); it++) {
+          nowPos->weight = *it;
+          if (isTipping()) {
+            continue;
+          }
+        }
       }
-
-      MoveOpt *now = new MoveOpt();
-
     }
-    return "1 15";
+
+    return string("");
   }
 
-  const char* removeWeight() {
-    return "";
+  string secondPlayerAddWeight() {
+    return string("");
+  }
+
+  string addWeight() {
+    return firstPlayer ? firstPlayerAddWeight() : secondPlayerAddWeight();
+  }
+
+  string firstPlayerRemoveWeight() {
+    return string("");
+  }
+
+  string secondPlayerRemoveWeight() {
+    return string("");
+  }
+
+  string removeWeight() {
+    return firstPlayer ? firstPlayerRemoveWeight() : secondPlayerRemoveWeight();
   }
 
 public:
   NoTippingPlayer() {
-    for (int i = -25; i <= 25; i++) {
-      board.push_back(new Weight(getIdx(i), 0, false));
+    for (int p = left_bound; p <= right_bound; p++) {
+      board.push_back(new Weight(p, 0, false));
     }
-    board[getIdx(-3)]->weight = 3;
-    left_torq = 0;
-    right_torq = 0;
+    board[getIdx(-4)]->weight = 3;
     firstPlayer = false;
-    for (int i = 0; i < 15; availables.insert(1+i++)) ;
+
+    //Initialize the final states
+    for (int p = left_bound; p <= right_bound; p++) {
+      set<int> final;
+      for (int w = minWeight; w <= maxWeight; w++) {
+        int tmp = board[getIdx(p)]->weight;
+        board[getIdx(p)]->weight = w;
+        if (!isTipping()) {
+          final.insert(w);
+        }
+        board[getIdx(p)]->weight = tmp;
+      }
+      if (final.size()) {
+        finalState[p] = final;
+      }
+    }
+
+    for (int i = minWeight; i <= maxWeight; availables.insert(i++)) ;
   }
 
   void setFirstPlayer() {
     firstPlayer = true;
-    printf("setFirstPlayer\n");
   }
 
-  const char* nextMove(bool adding, int position, int weight) {
+  string nextMove(bool adding, int position, int weight) {
+    //Update state
 
     if (isTipping()) {
-      return "";
+      return string("");
     }
 
     delete board[position];
     board[position] = new Weight(position, weight, false);
-
+    
     return adding ? addWeight() : removeWeight();
-  }
-
-  string letMeThink(){
-    printf("letMeThink...\n");
-    for (set<int>::iterator it=availables.begin(); it!=availables.end(); it++){
-      printf("%d", *it);
-    }
-    int position = -1;
-    int weight = 15;
-    update(position, weight, true);
-
-    string result = to_string(position)+" "+to_string(weight);
-
-    // return result.c_str();
-    return result;
   }
 };
 
@@ -248,9 +268,9 @@ int main(void)
     exit(1);
   }
 
-  printf("server: waiting for connections...\n");
-
   NoTippingPlayer player;
+
+  printf("server: waiting for connections...\n");
 
   while(1) {  // main accept() loop
     sin_size = sizeof their_addr;
@@ -269,21 +289,13 @@ int main(void)
     char cmd[10];
     int pos, weight;
     sscanf(buff.c_str(), "%s %d %d", cmd, &pos, &weight);
-    if (pos==0 && weight==0){
-      player.setFirstPlayer();
-    } else {
-      // player.update(pos, weight);
-    }
-    printf("cmd: %s\n", cmd);
-    printf("%s pos: %d, weight:%d\n", cmd, pos, weight);
-
-    string myNextMove = player.letMeThink();
+    //TODO: Entry point to player
+    //TODO: set first player or not
 
     if (!fork()) { // this is the child process
       close(sockfd); // child doesn't need the listener
-      // printf("%s", myNextMove.c_str());
-      if (send(new_fd, myNextMove.c_str(), myNextMove.length(), 0) == -1)
-        perror("");
+      if (send(new_fd, "Hello, world!", 13, 0) == -1)
+        perror("send");
       close(new_fd);
       exit(0);
     }
