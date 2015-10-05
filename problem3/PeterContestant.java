@@ -79,7 +79,13 @@ public class PeterContestant extends NoTippingPlayer{
 
             System.out.printf("Before weights_on_board.size(): %s\n", weights_on_board.size());
             List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
-            BestAfterDeepThinking resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            BestAfterDeepThinking resultDeepThink;
+            if (testWeights_on_board.size() > 10 ){
+                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, 10, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            } else {
+                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, testWeights_on_board.size(), Integer.MIN_VALUE, Integer.MAX_VALUE);
+            }
+
             System.out.printf("[%s, %s] numWays: %s\n", resultDeepThink.weight, resultDeepThink.position, resultDeepThink.numAvailableMoves);
             // System.out.printf("resultDeepThink.numAvailableMoves: %s, resultDeepThink.weight: %s, resultDeepThink.position: %s\n", resultDeepThink.numAvailableMoves, resultDeepThink.weight, resultDeepThink.position);
             // System.out.printf("-------------------------------\n");
@@ -96,59 +102,6 @@ public class PeterContestant extends NoTippingPlayer{
             System.out.printf("After weights_on_board.size(): %s\n", weights_on_board.size());
         }
         return decision.position + " " + decision.weight;
-    }
-
-    public BestAfterDeepThinking deepThinkAddMove(List<Integer> weights, List<Integer> hisWeights, int[] board, List<Weight> weights_on_board, int depth, int Avalue, int Bvalue) {
-        int alpha = Avalue, beta = Bvalue;
-        List<WeightPos> weightPosCandidate = new ArrayList<WeightPos>();
-        List<Integer> myTestWeights = weights;
-        List<Integer> hisTestWeights = hisWeights;
-        int[] testBoard = board;
-        List<Weight> test_weights_on_board = weights_on_board;
-
-        if (depth%2==1) {
-            //it's me
-            weightPosCandidate = getAllCandidates(weights, board, weights_on_board);
-        } else {
-            //it's him
-            weightPosCandidate = getAllCandidates(hisWeights, board, weights_on_board);
-        }
-        //define leaf node as the 5th depth
-        if (depth == 5) {
-            return new BestAfterDeepThinking (weightPosCandidate.size(), 0, 0);
-        }
-
-        if (depth%2==1) {
-            for (WeightPos eachCandidate : weightPosCandidate) {
-                myTestWeights.remove(myTestWeights.indexOf(eachCandidate.weight));
-                test_weights_on_board.add(new Weight(eachCandidate.weight, eachCandidate.position, player));
-                testBoard[eachCandidate.position+25]=eachCandidate.weight;
-                BestAfterDeepThinking nextLevelTesting = deepThinkAddMove(myTestWeights,hisTestWeights, testBoard, weights_on_board, depth+1, alpha, beta);
-                beta = Math.max(beta, nextLevelTesting.numAvailableMoves);
-                if (alpha >= beta) {
-                    return new BestAfterDeepThinking(beta, eachCandidate.weight, eachCandidate.position);
-                }
-            }
-            return new BestAfterDeepThinking(alpha, weightPosCandidate.get(weightPosCandidate.size() - 1).weight, weightPosCandidate.get(weightPosCandidate.size() - 1).position);
-            // return alpha;
-        } else {
-            for (WeightPos eachCandidate : weightPosCandidate) {
-                hisTestWeights.remove(hisTestWeights.indexOf(eachCandidate.weight));
-                test_weights_on_board.add(new Weight(eachCandidate.weight, eachCandidate.position, (player+1)%2));
-                testBoard[eachCandidate.position+25]=eachCandidate.weight;
-                BestAfterDeepThinking nextLevelTesting = deepThinkAddMove(myTestWeights,hisTestWeights, testBoard, weights_on_board, depth+1, alpha, beta);
-                alpha = Math.min(alpha, nextLevelTesting.numAvailableMoves);
-                if (alpha >= beta) {
-                    return new BestAfterDeepThinking(alpha, eachCandidate.weight, eachCandidate.position);
-                }
-            }
-            return new BestAfterDeepThinking(beta, weightPosCandidate.get(weightPosCandidate.size() - 1).weight, weightPosCandidate.get(weightPosCandidate.size() - 1).position);
-            // return beta;
-        }
-
-        // System.out.print("All candidats: ");
-        // for(WeightPos obj : myWeightPosCandidate) {System.out.printf("Weight: %s, Position: %s", obj.weight, obj.position);}
-        // System.out.print("---------------------");
     }
 
     public Weight makeAddMove(List<Integer> weights, int[] board, List<Weight> weights_on_board) {
@@ -218,31 +171,15 @@ public class PeterContestant extends NoTippingPlayer{
         }
     }
 
-    public void makeRemoveMove2(List<Weight> weights_on_board) {
-        List<Weight> random_candidate = new ArrayList<Weight>();
+    public BestAfterDeepThinking deepThinkRemoveMove(List<Weight> weights_on_board, int depth, int depthSetting, int alpha, int beta) {
         List<Weight> myRemove_candidate = new ArrayList<Weight>();
         List<Weight> hisRemove_candidate = new ArrayList<Weight>();
-        // player 1 can remove anything
-        if (player == 0) {
-            myRemove_candidate = weights_on_board;
-            hisRemove_candidate = getMyBlocks(weights_on_board, (player+1)%2);
-        } else {
-            myRemove_candidate = weights_on_board;
-            myRemove_candidate = getMyBlocks(weights_on_board, player);
-            if (myRemove_candidate.size() == 0){
-                // no more player 2 blocks
-                myRemove_candidate = weights_on_board;
-            }
-        }
-    }
 
-    public twoCandidateList get_remove_candidate (List<Weight> weights_on_board) {
-        List<Weight> myRemove_candidate = new ArrayList<Weight>();
-        List<Weight> hisRemove_candidate = new ArrayList<Weight>();
         if (player == 0) {
             myRemove_candidate = weights_on_board;
-            hisRemove_candidate = getMyBlocks(weights_on_board, (player+1)%2);
+            hisRemove_candidate = getMyBlocks(weights_on_board, 1);
         } else {
+            // player 2 can only remove his/her own piece unless there are none
             myRemove_candidate = getMyBlocks(weights_on_board, player);
             hisRemove_candidate = weights_on_board;
             if (myRemove_candidate.size() == 0){
@@ -250,30 +187,22 @@ public class PeterContestant extends NoTippingPlayer{
                 myRemove_candidate = weights_on_board;
             }
         }
-        return new twoCandidateList(myRemove_candidate, hisRemove_candidate);
-    }
-
-    public BestAfterDeepThinking deepThinkRemoveMove(List<Weight> weights_on_board, int depth, int alpha, int beta) {
-        // List<Weight> testWeights_on_board = new ArrayList<Weight>();
-        twoCandidateList candidateLists = get_remove_candidate(weights_on_board);
-        List<Weight> myRemove_candidate = new ArrayList<Weight>(candidateLists.myList);
-        List<Weight> hisRemove_candidate = new ArrayList<Weight>(candidateLists.hisList);
         // myRemove_candidate = candidateLists.myList;
         // hisRemove_candidate = candidateLists.hisList;
 
         // System.out.printf("depth: %s\n", depth);
         // System.out.printf("hisRemove_candidate\n");
         // for (Weight obj : hisRemove_candidate) {
-        //     System.out.printf("%s ", obj.weight);
+        //     System.out.printf("[%s,%s] ", obj.weight, obj.position);
         // }
         // System.out.printf("\nmyRemove_candidate\n");
         // for (Weight obj : myRemove_candidate) {
-        //     System.out.printf("%s ", obj.weight);
+        //     System.out.printf("[%s,%s] ", obj.weight, obj.position);
         // }
         // System.out.printf("\n");
 
         Weight curBestWeight = new Weight(0,0,0);
-        if (depth == 3) {
+        if (depth == depthSetting) {
             int numAvailableMoves = 0;
             for(Weight eachWeightCandidate : myRemove_candidate) {
                 if (canRemove(eachWeightCandidate, weights_on_board)) {
@@ -283,18 +212,6 @@ public class PeterContestant extends NoTippingPlayer{
             return new BestAfterDeepThinking(numAvailableMoves, 0, 0);
         }
 
-        // List<Weight> myRemove_ValidCandidate = new ArrayList<Weight>();
-        // List<Weight> hisRemove_ValidCandidate = new ArrayList<Weight>();
-        // for(Weight eachWeightCandidate : myRemove_candidate) {
-        //     if (canRemove(eachWeightCandidate, weights_on_board)) {
-        //         myRemove_ValidCandidate.add(eachWeightCandidate);
-        //     }
-        // }
-        // for(Weight eachWeightCandidate : hisRemove_candidate) {
-        //     if (canRemove(eachWeightCandidate, weights_on_board)) {
-        //         Remove_ValidCandidate.add(eachWeightCandidate);
-        //     }
-        // }
         boolean allNotMoveable = true;
         if (depth%2==1) {
             //it's my term, max node, max alpha
@@ -307,7 +224,7 @@ public class PeterContestant extends NoTippingPlayer{
                 // System.out.printf("Depth: %s, take my weight: %s\n", depth, eachWeightCandidate.weight);
                 List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
                 testWeights_on_board.remove(eachWeightCandidate);
-                BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(testWeights_on_board, depth+1, alpha, beta);
+                BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(testWeights_on_board, depth+1, depthSetting, alpha, beta);
                 if (myDeepTest.numAvailableMoves > alpha) {
                     alpha = myDeepTest.numAvailableMoves;
                     curBestWeight = eachWeightCandidate;
@@ -334,7 +251,7 @@ public class PeterContestant extends NoTippingPlayer{
                 // System.out.printf("Depth: %s, take his weight: %s\n", depth, eachWeightCandidate.weight);
                 List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
                 testWeights_on_board.remove(eachWeightCandidate);
-                BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(testWeights_on_board, depth+1, alpha, beta);
+                BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(testWeights_on_board, depth+1, depthSetting, alpha, beta);
                 if(myDeepTest.numAvailableMoves < beta) {
                     beta = myDeepTest.numAvailableMoves;
                     curBestWeight = eachWeightCandidate;
@@ -397,21 +314,6 @@ public class PeterContestant extends NoTippingPlayer{
         new PeterContestant(Integer.parseInt(args[0]));
     }
 
-    // get all of the weight and position candidates of valid moves of current situation
-    public List<WeightPos> getAllCandidates(List<Integer> weights, int[] board, List<Weight> weights_on_board) {
-        List<WeightPos> weightPosCandidates = new ArrayList<WeightPos>();
-        for (int myRemaindWeight : weights) {
-            for (int pos = -25; pos <25; pos++) {
-                if(board[pos+25] == 0) {
-                    if (validAddMove(myRemaindWeight, pos, weights_on_board)) {
-                        weightPosCandidates.add(new WeightPos(myRemaindWeight,pos));
-                    }
-                }
-            }
-        }
-        return weightPosCandidates;
-    }
-
     public class Weight {
         public int weight;
         public int position;
@@ -423,15 +325,6 @@ public class PeterContestant extends NoTippingPlayer{
         }
     }
 
-    public class WeightPos {
-        public int weight;
-        public int position;
-        public WeightPos(int weight, int position) {
-            this.weight = weight;
-            this.position = position;
-        }
-    }
-
     public class BestAfterDeepThinking {
         public int numAvailableMoves;
         public int weight;
@@ -440,15 +333,6 @@ public class PeterContestant extends NoTippingPlayer{
             this.numAvailableMoves = numAvailableMoves;
             this.weight = weight;
             this.position = position;
-        }
-    }
-
-    public class twoCandidateList {
-        public List<Weight> myList;
-        public List<Weight> hisList;
-        public twoCandidateList(List<Weight> myList, List<Weight> hisList) {
-            this.myList = myList;
-            this.hisList = hisList;
         }
     }
 
