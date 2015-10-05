@@ -27,10 +27,8 @@ public class PeterContestant extends NoTippingPlayer{
             // assume player is 2 (0,1) for (player1, player2) respectively
             this.player = 1;
             weights = new ArrayList<Integer>();
-            hisWeights = new ArrayList<Integer>();
             for (int i = 1; i <= 15; i ++) {
                 weights.add(i);
-                hisWeights.add(i);
             }
 
             weights_on_board = new ArrayList<Weight>();
@@ -57,11 +55,6 @@ public class PeterContestant extends NoTippingPlayer{
             if (command.equals("ADDING")) {
                 weights_on_board.add(new Weight(weight, position, (player+1)%2));
                 board[position+25] = weight;
-                int hisIndex = hisWeights.indexOf(weight);
-                // int hisIndex = Arrays.asList(hisWeights).indexOf(weight);
-                hisWeights.remove(hisIndex);
-                // for (int obj : hisWeights) {System.out.println(obj);}
-
             } else {
                 // The last user add will end up with the following message
                 // REMOVING position weight
@@ -69,11 +62,6 @@ public class PeterContestant extends NoTippingPlayer{
                 if (weights_on_board.size() == 30 && firstRemove) {
                     weights_on_board.add(new Weight(weight, position, (player+1)%2));
                     firstRemove = false;
-
-                    int hisIndex = hisWeights.indexOf(weight);
-                    // int hisIndex = Arrays.asList(hisWeights).indexOf(weight);
-                    hisWeights.remove(hisIndex);
-                    for (int obj : hisWeights) {System.out.println(obj);}
                 } else {
                     removeWeight(weights_on_board, position, weight);
                 }
@@ -84,22 +72,28 @@ public class PeterContestant extends NoTippingPlayer{
         Weight decision;
         if (command.equals("ADDING")) {
             decision = makeAddMove(weights, board, weights_on_board);
-            // deepThinkAddMove(weights, hisWeights, board, weights_on_board, 1);
-
             // update board
             weights_on_board.add(decision);
         } else {
-            decision = makeRemoveMove(weights_on_board);
-            deepThinkRemoveMove(weights_on_board, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            // decision = makeRemoveMove(weights_on_board);
 
+            System.out.printf("Before weights_on_board.size(): %s\n", weights_on_board.size());
             List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
             BestAfterDeepThinking resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, Integer.MIN_VALUE, Integer.MAX_VALUE);
-            System.out.printf("resultDeepThink.numAvailableMoves: %s, resultDeepThink.weight: %s, resultDeepThink.position: %s\n", resultDeepThink.numAvailableMoves, resultDeepThink.weight, resultDeepThink.position);
-            System.out.printf("-------------------------------\n");
+            System.out.printf("[%s, %s] numWays: %s\n", resultDeepThink.weight, resultDeepThink.position, resultDeepThink.numAvailableMoves);
+            // System.out.printf("resultDeepThink.numAvailableMoves: %s, resultDeepThink.weight: %s, resultDeepThink.position: %s\n", resultDeepThink.numAvailableMoves, resultDeepThink.weight, resultDeepThink.position);
+            // System.out.printf("-------------------------------\n");
+
+            if (resultDeepThink.weight == 0) {
+                decision = makeRemoveMove(weights_on_board);
+            } else {
+                decision = new Weight(resultDeepThink.weight, resultDeepThink.position, player);
+            }
 
             // update board
-            weights_on_board.remove(decision);
-            System.out.printf("weights_on_board.size(): %s", weights_on_board.size());
+            removeWeight(weights_on_board, resultDeepThink.position, resultDeepThink.weight);
+            // weights_on_board.remove(decision);
+            System.out.printf("After weights_on_board.size(): %s\n", weights_on_board.size());
         }
         return decision.position + " " + decision.weight;
     }
@@ -267,16 +261,16 @@ public class PeterContestant extends NoTippingPlayer{
         // myRemove_candidate = candidateLists.myList;
         // hisRemove_candidate = candidateLists.hisList;
 
-        System.out.printf("depth: %s\n", depth);
-        System.out.printf("hisRemove_candidate\n");
-        for (Weight obj : hisRemove_candidate) {
-            System.out.printf("%s ", obj.weight);
-        }
-        System.out.printf("\nmyRemove_candidate\n");
-        for (Weight obj : myRemove_candidate) {
-            System.out.printf("%s ", obj.weight);
-        }
-        System.out.printf("\n");
+        // System.out.printf("depth: %s\n", depth);
+        // System.out.printf("hisRemove_candidate\n");
+        // for (Weight obj : hisRemove_candidate) {
+        //     System.out.printf("%s ", obj.weight);
+        // }
+        // System.out.printf("\nmyRemove_candidate\n");
+        // for (Weight obj : myRemove_candidate) {
+        //     System.out.printf("%s ", obj.weight);
+        // }
+        // System.out.printf("\n");
 
         Weight curBestWeight = new Weight(0,0,0);
         if (depth == 3) {
@@ -288,6 +282,20 @@ public class PeterContestant extends NoTippingPlayer{
             }
             return new BestAfterDeepThinking(numAvailableMoves, 0, 0);
         }
+
+        // List<Weight> myRemove_ValidCandidate = new ArrayList<Weight>();
+        // List<Weight> hisRemove_ValidCandidate = new ArrayList<Weight>();
+        // for(Weight eachWeightCandidate : myRemove_candidate) {
+        //     if (canRemove(eachWeightCandidate, weights_on_board)) {
+        //         myRemove_ValidCandidate.add(eachWeightCandidate);
+        //     }
+        // }
+        // for(Weight eachWeightCandidate : hisRemove_candidate) {
+        //     if (canRemove(eachWeightCandidate, weights_on_board)) {
+        //         Remove_ValidCandidate.add(eachWeightCandidate);
+        //     }
+        // }
+        boolean allNotMoveable = true;
         if (depth%2==1) {
             //it's my term, max node, max alpha
             for (int i=0; i<myRemove_candidate.size(); i++) {
@@ -295,7 +303,8 @@ public class PeterContestant extends NoTippingPlayer{
                 if (!canRemove(eachWeightCandidate, weights_on_board)) {
                     continue;
                 }
-                System.out.printf("Depth: %s, take my weight: %s\n", depth, eachWeightCandidate.weight);
+                allNotMoveable = false;
+                // System.out.printf("Depth: %s, take my weight: %s\n", depth, eachWeightCandidate.weight);
                 List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
                 testWeights_on_board.remove(eachWeightCandidate);
                 BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(testWeights_on_board, depth+1, alpha, beta);
@@ -303,14 +312,17 @@ public class PeterContestant extends NoTippingPlayer{
                     alpha = myDeepTest.numAvailableMoves;
                     curBestWeight = eachWeightCandidate;
                 }
-                System.out.printf("Depth: %s, got myDeepTest.numAvailableMoves: %s\n", depth, myDeepTest.numAvailableMoves);
-                System.out.printf("alpha: %s, beta: %s\n", alpha, beta);
-                // beta = Math.max(beat, myDeepTest.numAvailableMoves);
+                // System.out.printf("Depth: %s, got myDeepTest.numAvailableMoves: %s\n", depth, myDeepTest.numAvailableMoves);
+                // System.out.printf("alpha: %s, beta: %s\n", alpha, beta);
                 if (alpha >= beta) {
                     return new BestAfterDeepThinking(beta, myDeepTest.weight, myDeepTest.position);
                 }
             }
-            return new BestAfterDeepThinking(alpha, curBestWeight.weight, curBestWeight.position);
+            if (allNotMoveable) {
+                return new BestAfterDeepThinking(Integer.MAX_VALUE, curBestWeight.weight, curBestWeight.position);
+            } else {
+                return new BestAfterDeepThinking(alpha, curBestWeight.weight, curBestWeight.position);
+            }
         } else {
             //it's his term, min node, min beta
             for (int i=0; i<hisRemove_candidate.size(); i++) {
@@ -318,21 +330,26 @@ public class PeterContestant extends NoTippingPlayer{
                 if (canRemove(eachWeightCandidate, weights_on_board)) {
                     continue;
                 }
-                System.out.printf("Depth: %s, take his weight: %s\n", depth, eachWeightCandidate.weight);
+                allNotMoveable = false;
+                // System.out.printf("Depth: %s, take his weight: %s\n", depth, eachWeightCandidate.weight);
                 List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
                 testWeights_on_board.remove(eachWeightCandidate);
                 BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(testWeights_on_board, depth+1, alpha, beta);
                 if(myDeepTest.numAvailableMoves < beta) {
                     beta = myDeepTest.numAvailableMoves;
-                    // curBestWeight = eachWeightCandidate;
+                    curBestWeight = eachWeightCandidate;
                 }
-                System.out.printf("Depth: %s, got myDeepTest.numAvailableMoves: %s\n", depth, myDeepTest.numAvailableMoves);
-                System.out.printf("alpha: %s, beta: %s\n", alpha, beta);
+                // System.out.printf("Depth: %s, got myDeepTest.numAvailableMoves: %s\n", depth, myDeepTest.numAvailableMoves);
+                // System.out.printf("alpha: %s, beta: %s\n", alpha, beta);
                 if(alpha >= beta) {
                     return new BestAfterDeepThinking(alpha, myDeepTest.weight, myDeepTest.position);
                 }
             }
-            return new BestAfterDeepThinking(beta, curBestWeight.weight, curBestWeight.position);
+            if (allNotMoveable) {
+                return new BestAfterDeepThinking(Integer.MIN_VALUE, curBestWeight.weight, curBestWeight.position);
+            } else {
+                return new BestAfterDeepThinking(beta, curBestWeight.weight, curBestWeight.position);
+            }
         }
     }
 
