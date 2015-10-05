@@ -234,12 +234,44 @@ public class PeterContestant extends NoTippingPlayer{
                 myRemove_candidate = weights_on_board;
             }
         }
-        deepThinkRemoveMove(weights_on_board,);
+        // deepThinkRemoveMove(weights_on_board,);
     }
 
     public BestAfterDeepThinking deepThinkRemoveMove(List<Weight> weights_on_board, List<Weight> myRemove_candidate, List<Weight> hisRemove_candidate, int depth, int alpha, int beta) {
+        List<Weight> test_weights_on_board = weights_on_board;
+        List<Weight> test_myRemove_candidate = myRemove_candidate;
+        List<Weight> test_hisRemove_candidate = hisRemove_candidate;
+        Weight curBestWeight;
         if (depth == 3) {
-            return myRemove_candidate.size();
+            return new BestAfterDeepThinking(myRemove_candidate.size(), 0, 0);
+        }
+        if (depth%2==1) {
+            //it's my term, max node, max alpha
+            for(Weight eachWeightCandidate : myRemove_candidate) {
+                BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(test_weights_on_board, test_myRemove_candidate, test_hisRemove_candidate, depth+1, alpha, beta);
+                if (myDeepTest.numAvailableMoves > alpha) {
+                    alpha = myDeepTest.numAvailableMoves;
+                    curBestWeight = eachWeightCandidate;
+                }
+                // beta = Math.max(beat, myDeepTest.numAvailableMoves);
+                if (alpha >= beta) {
+                    return new BestAfterDeepThinking(beta, myDeepTest.weight, myDeepTest.position);
+                }
+            }
+            return new BestAfterDeepThinking(alpha, curBestWeight.weight, curBestWeight.position);
+        } else {
+            //it's his term, min node, min beta
+            for(Weight eachWeightCandidate : myRemove_candidate) {
+                BestAfterDeepThinking myDeepTest = deepThinkRemoveMove(test_weights_on_board, test_myRemove_candidate, test_hisRemove_candidate, depth+1, alpha, beta);
+                if(myDeepTest.numAvailableMoves < beta) {
+                    beta = myDeepTest.numAvailableMoves;
+                    curBestWeight = eachWeightCandidate;
+                }
+                if(alpha >= beta) {
+                    return new BestAfterDeepThinking(alpha, myDeepTest.weight, myDeepTest.position);
+                }
+            }
+            return new BestAfterDeepThinking(beta, curBestWeight.weight, curBestWeight.position);
         }
     }
 
@@ -312,7 +344,7 @@ public class PeterContestant extends NoTippingPlayer{
             this.player = player;
         }
     }
-    
+
     public class WeightPos {
         public int weight;
         public int position;
