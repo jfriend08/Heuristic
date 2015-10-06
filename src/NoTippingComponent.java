@@ -789,7 +789,7 @@ public class NoTippingComponent
                     if (w1.position == position) {
                         choose_blue = true;
                     }
-                } else if(w1.whose == 2 && (w1.position != 0 && w1.place != 1 && w1.whose == 2)) {
+                } else if(w1.whose == 2 && (w1.position != 0 && w1.whose == 2)) {
                     // the green piece is fine too
                     if (w1.position == position) {
                         choose_blue = true;
@@ -846,7 +846,7 @@ public class NoTippingComponent
                 break;
         }
         while (true) {// Move across above the drop off point
-            Thread.sleep(1);
+            Thread.sleep(10);
             if (!Player.noDelay()) {
                 if (Math.abs(cx - x2) > 3)
                     cx += vx * 30;
@@ -861,7 +861,7 @@ public class NoTippingComponent
                 break;
         }
         while (true) {// Drop it down
-            Thread.sleep(1);
+            Thread.sleep(10);
             if (!Player.noDelay()) {
                 if (Math.abs(cy - y2) > 3)
                     cy += vy * 30;
