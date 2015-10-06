@@ -90,16 +90,18 @@ public class PeterContestant extends NoTippingPlayer{
             System.out.printf("Before weights_on_board.size(): %s\n", weights_on_board.size());
             List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
             BestAfterDeepThinking resultDeepThink;
+            List<Weight> my_candidate = new ArrayList<Weight>();
+            my_candidate = getMyBlocks(weights_on_board, player);
             int setDepth;
             if (player == 1){
                 setDepth = 8;
             } else {
-                setDepth = 14;
+                setDepth = 9;
             }
-            if (testWeights_on_board.size() > setDepth){
+            if (my_candidate.size() > setDepth){
                 resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, setDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
             } else {
-                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, testWeights_on_board.size(), Integer.MIN_VALUE, Integer.MAX_VALUE);
+                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, my_candidate.size(), Integer.MIN_VALUE, Integer.MAX_VALUE);
             }
 
             System.out.printf("[%s, %s] numWays: %s\n", resultDeepThink.weight, resultDeepThink.position, resultDeepThink.numAvailableMoves);
@@ -108,6 +110,7 @@ public class PeterContestant extends NoTippingPlayer{
 
             if (resultDeepThink.weight == 0) {
                 decision = makeRemoveMove(weights_on_board);
+                System.out.printf("[%s, %s] choosed\n", decision.weight, decision.position);
             } else {
                 decision = new Weight(resultDeepThink.weight, resultDeepThink.position, player);
             }
@@ -234,6 +237,9 @@ public class PeterContestant extends NoTippingPlayer{
             //it's my term, max node, max alpha
             for (int i=0; i<myRemove_candidate.size(); i++) {
                 Weight eachWeightCandidate = myRemove_candidate.get(i);
+                if(player == 1 && myRemove_candidate.size() != 1 && eachWeightCandidate.position == -4) {
+                    continue;
+                }
                 if (!canRemove(eachWeightCandidate, weights_on_board)) {
                     continue;
                 }
@@ -261,7 +267,10 @@ public class PeterContestant extends NoTippingPlayer{
             //it's his term, min node, min beta
             for (int i=0; i<hisRemove_candidate.size(); i++) {
                 Weight eachWeightCandidate = hisRemove_candidate.get(i);
-                if (canRemove(eachWeightCandidate, weights_on_board)) {
+                if(player == 1 && myRemove_candidate.size() != 1 && eachWeightCandidate.position == -4) {
+                    continue;
+                }
+                if (!canRemove(eachWeightCandidate, weights_on_board)) {
                     continue;
                 }
                 allNotMoveable = false;
