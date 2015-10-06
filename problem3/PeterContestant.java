@@ -7,6 +7,7 @@ import java.util.StringTokenizer;
 import java.util.Arrays;
 
 
+
 public class PeterContestant extends NoTippingPlayer{
     private Random strategy;
     private int player;
@@ -15,6 +16,7 @@ public class PeterContestant extends NoTippingPlayer{
     private List<Weight> weights_on_board;
     private int[] board;
     private boolean firstRemove;
+    private AddStrategy addStrategy;
 
     PeterContestant(int port) {
         super(port);
@@ -24,6 +26,7 @@ public class PeterContestant extends NoTippingPlayer{
         if (strategy == null) {
             // initialize
             strategy = new Random();
+            addStrategy = new AddStrategy();
             // assume player is 2 (0,1) for (player1, player2) respectively
             this.player = 1;
             weights = new ArrayList<Integer>();
@@ -71,7 +74,15 @@ public class PeterContestant extends NoTippingPlayer{
         // make the moves
         Weight decision;
         if (command.equals("ADDING")) {
-            decision = makeAddMove(weights, board, weights_on_board);
+            // //original
+            // decision = makeAddMove(weights, board, weights_on_board);
+
+            String addMove = addStrategy.process(position, weight);
+            tk = new StringTokenizer(addMove);
+            int addPosition = Integer.parseInt(tk.nextToken());
+            int addWeight = Integer.parseInt(tk.nextToken());
+            decision = new Weight(addWeight, addPosition, player);
+
             // update board
             weights_on_board.add(decision);
         } else {
