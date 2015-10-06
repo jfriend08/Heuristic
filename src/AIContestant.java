@@ -42,8 +42,11 @@ public class AIContestant extends NoTippingPlayer{
 
         // get the command, and opponent's position and weight last round.
         command = tk.nextToken();
+        System.out.println(command);
         int position = Integer.parseInt(tk.nextToken());
         int weight = Integer.parseInt(tk.nextToken());
+        System.out.println(position);
+        System.out.println(weight);
 
         // in the beginning of game, whoever gets 0, 0 for position and weight is
         // player 1
