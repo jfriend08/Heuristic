@@ -80,8 +80,14 @@ public class PeterContestant extends NoTippingPlayer{
             System.out.printf("Before weights_on_board.size(): %s\n", weights_on_board.size());
             List<Weight> testWeights_on_board = new ArrayList<Weight>(weights_on_board);
             BestAfterDeepThinking resultDeepThink;
-            if (testWeights_on_board.size() > 10 ){
-                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, 10, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            int setDepth;
+            if (player == 1){
+                setDepth = 8;
+            } else {
+                setDepth = 14;
+            }
+            if (testWeights_on_board.size() > setDepth){
+                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, setDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
             } else {
                 resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, testWeights_on_board.size(), Integer.MIN_VALUE, Integer.MAX_VALUE);
             }
@@ -174,6 +180,7 @@ public class PeterContestant extends NoTippingPlayer{
     public BestAfterDeepThinking deepThinkRemoveMove(List<Weight> weights_on_board, int depth, int depthSetting, int alpha, int beta) {
         List<Weight> myRemove_candidate = new ArrayList<Weight>();
         List<Weight> hisRemove_candidate = new ArrayList<Weight>();
+        int errorFactor = 1;
 
         if (player == 0) {
             myRemove_candidate = weights_on_board;
