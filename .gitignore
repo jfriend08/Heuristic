@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -47,3 +48,15 @@ Dockerfile
 
 # Vim's temp files
 *swp
+=======
+.DS_Store
+hs_err_pid7111.log
+pid.log
+processes.pid
+src/.DS_Store
+ylc265@access.cims.nyu.edu/AIContestant$Weight.class
+ylc265@access.cims.nyu.edu/AIContestant.class
+ylc265@access.cims.nyu.edu/NoTippingPlayer.class
+ylc265@access.cims.nyu.edu/noTippingGame.jar
+ylc265@access.cims.nyu.edu/runGame.sh
+>>>>>>> 4e3e44fe952b2f07123a8f7f928c27ff73a3e9b4

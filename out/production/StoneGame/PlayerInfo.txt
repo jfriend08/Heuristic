@@ -1,0 +1,21 @@
+# This file contains the port numbers of all the registered players of this game
+
+AI1 = 8001
+AI2 = 8002
+ClassMate = 8000
+AI = 8003
+Brooklyn = 8004
+Prometheus = 8005
+TeamDRS414 = 8006
+mv_cly = 8007
+vamsi = 8008
+leon_spark = 8009
+lyclqx = 8010
+DeweiAndMayank = 8011
+danna_jack = 8012
+P&G = 8013
+cocaine = 8014
+sacrebleu = 8015
+MarthaandScott = 8016
+KeeyonE = 8017
+TolgaAndTory = 8018

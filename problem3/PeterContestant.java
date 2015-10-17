@@ -98,10 +98,10 @@ public class PeterContestant extends NoTippingPlayer{
             } else {
                 setDepth = 9;
             }
-            if (my_candidate.size() > setDepth){
+            if (testWeights_on_board.size() > setDepth){
                 resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, setDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
             } else {
-                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, my_candidate.size(), Integer.MIN_VALUE, Integer.MAX_VALUE);
+                resultDeepThink = deepThinkRemoveMove(testWeights_on_board, 1, testWeights_on_board.size(), Integer.MIN_VALUE, Integer.MAX_VALUE);
             }
 
             System.out.printf("[%s, %s] numWays: %s\n", resultDeepThink.weight, resultDeepThink.position, resultDeepThink.numAvailableMoves);
