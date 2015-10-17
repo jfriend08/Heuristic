@@ -44,8 +44,9 @@ class kMeans {
     }
     void printPairs(vector<pair<float, float> > pairs) {
       for(int i=0; i<pairs.size(); i++) {
-        printf("[%f, %f]\n", pairs[i].first, pairs[i].second);
+        printf("[%f, %f] ", pairs[i].first, pairs[i].second);
       }
+      printf("\n");
 
     }
     void updateCentPoints(vector<vector<patientInfo> > &Groups) {
@@ -55,11 +56,13 @@ class kMeans {
         float totalX=0, totalY=0;
         float thisGroupSize = Groups[i].size();
         for (int member=0; member<thisGroupSize; member++) {
-          totalX += Groups[i][0].xloc;
-          totalY += Groups[i][0].yloc;
+          totalX += Groups[i][member].xloc;
+          totalY += Groups[i][member].yloc;
         }
-        // printf("totalX: %f, totalY: %f, thisGroupSize: %f\n", totalX, totalY, thisGroupSize);
-        cent_points[i] = make_pair(totalX/thisGroupSize, totalY/thisGroupSize);
+        printf("totalX: %f, totalY: %f, thisGroupSize: %f\n", totalX, totalY, thisGroupSize);
+        cent_points[i].first = totalX/thisGroupSize;
+        cent_points[i].second = totalY/thisGroupSize;
+        // make_pair(totalX/thisGroupSize, totalY/thisGroupSize);
       }
     }
 
@@ -77,7 +80,7 @@ class kMeans {
       }
 
       while( fabs(totalCloestDist_cur-totalCloestDist_prev)/totalCloestDist_prev > 0.01 ){
-        // cout<<"hi"<<endl;
+        printf("------------------------------\n");
         totalCloestDist_prev = totalCloestDist_cur;
         totalCloestDist_cur = 0;
         vector<vector<patientInfo> > Groups(numCluster);
@@ -88,10 +91,13 @@ class kMeans {
           totalCloestDist_cur += idx_dist.second;
         }
 
-        printf("totalCloestDist_cur: %f\n", totalCloestDist_cur);
         for(int i=0; i<Groups.size(); i++) {
           printf("Group %d: %lu size\n", i, Groups[i].size());
         }
+
+        printf("totalCloestDist_prev: %f\n", totalCloestDist_prev);
+        printf("totalCloestDist_cur: %f\n", totalCloestDist_cur);
+
         printf("cent_points before:\n");
         printPairs(cent_points);
         updateCentPoints(Groups);
@@ -118,6 +124,7 @@ int main(int argc, char *argv[]){
 
   while (count < num_Patients) {
     cin >> xloc >> separator >> yloc >> separator >> rescuetime;
+    printf("%d\t%d\t%d\n", xloc, yloc, rescuetime);
     patientInfo myPatient(xloc, yloc, rescuetime);
     allPatients.push_back(myPatient);
     count++;
