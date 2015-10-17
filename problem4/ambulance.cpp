@@ -16,6 +16,13 @@ struct patientInfo {
   int xloc,yloc,rescuetime;
   patientInfo(int myxloc, int myyloc, int myrescuetime): xloc(myxloc), yloc(myyloc), rescuetime(myrescuetime){}
 } ;
+//later can be used to sort list of pair
+template<typename P> struct Cmp {
+  bool operator()(const P &p1, const P &p2){
+    if(p1.first < p2.first) return true;
+    return false;
+  }
+};
 
 class Solution {
 
@@ -24,7 +31,7 @@ class kMeans {
   private:
     vector<patientInfo> allPatients;
     int numCluster;
-    vector<pair<float, float> > cent_points;
+    vector<pair<int, int> > cent_points;
   public:
     kMeans(vector<patientInfo> inputAllPatients, int intputNumCluster): allPatients(inputAllPatients), numCluster(intputNumCluster) {}
 
@@ -42,9 +49,9 @@ class kMeans {
       }
       return make_pair(cloestIdx, cloestedDist);
     }
-    void printPairs(vector<pair<float, float> > pairs) {
+    void printPairs(vector<pair<int, int> > pairs) {
       for(int i=0; i<pairs.size(); i++) {
-        printf("[%f, %f] ", pairs[i].first, pairs[i].second);
+        printf("[%d, %d] ", pairs[i].first, pairs[i].second);
       }
       printf("\n");
 
@@ -53,22 +60,53 @@ class kMeans {
       // for each group
       for(int i=0; i<Groups.size(); i++){
         // for each points in group
-        float totalX=0, totalY=0;
-        float thisGroupSize = Groups[i].size();
+        int totalX=0, totalY=0;
+        int thisGroupSize = Groups[i].size();
         for (int member=0; member<thisGroupSize; member++) {
           totalX += Groups[i][member].xloc;
           totalY += Groups[i][member].yloc;
         }
-        printf("totalX: %f, totalY: %f, thisGroupSize: %f\n", totalX, totalY, thisGroupSize);
+        printf("totalX: %d, totalY: %d, thisGroupSize: %d\n", totalX, totalY, thisGroupSize);
         cent_points[i].first = totalX/thisGroupSize;
         cent_points[i].second = totalY/thisGroupSize;
         // make_pair(totalX/thisGroupSize, totalY/thisGroupSize);
       }
     }
 
-    void findHospitalLocations() {
+    void updateCentPointsByLife(vector<vector<patientInfo> > &Groups) {
+      // for each group
+      for(int i=0; i<Groups.size(); i++){
+        // for each points in group
+        float totalX=0, totalY=0;
+        float thisGroupSize = Groups[i].size();
+        int time_lowBound=INT_MAX, time_upBound=INT_MIN;
+        float timeInterval;
+        for (int member=0; member<thisGroupSize; member++) {
+          if(Groups[i][member].rescuetime > time_upBound) {
+            time_upBound = Groups[i][member].rescuetime;
+          }
+          if(Groups[i][member].rescuetime < time_lowBound) {
+            time_lowBound = Groups[i][member].rescuetime;
+          }
+        }
+
+        timeInterval = (time_upBound - time_lowBound);
+
+        for (int member=0; member<thisGroupSize; member++) {
+          float weighting = (timeInterval-Groups[i][member].rescuetime)/timeInterval;
+          totalX += Groups[i][member].xloc * weighting;
+          totalY += Groups[i][member].yloc * weighting;
+        }
+        cent_points[i].first = totalX/thisGroupSize;
+        cent_points[i].second = totalY/thisGroupSize;
+        // make_pair(totalX/thisGroupSize, totalY/thisGroupSize);
+      }
+    }
+
+    vector<pair<int,pair<int, int> > > findHospitalLocations() {
       map<int, bool> seen;
       float totalCloestDist_cur=0, totalCloestDist_prev=FLT_MAX;
+      vector<vector<patientInfo> > finalGroups(numCluster);
 
       //cent_points init: randomly pick up cent_points from data
       while(cent_points.size() < numCluster){
@@ -103,7 +141,22 @@ class kMeans {
         updateCentPoints(Groups);
         printf("cent_points after:\n");
         printPairs(cent_points);
+        finalGroups = Groups;
       }
+
+      vector<pair<int,pair<int, int> > > superResult;
+      for (int i=0; i<finalGroups.size(); i++) {
+        // vector of pairs. first val in each pair is the #patients in that group, and the second val is the hospotial location
+        superResult.push_back(make_pair(finalGroups[i].size(), cent_points[i]));
+      }
+
+      sort(superResult.begin(), superResult.end(), Cmp<pair<int,pair<float, float> > >()); //sort the vector of pair
+      return superResult;
+
+      // printf("cent_points updateCentPointsByLife:\n");
+      // updateCentPointsByLife(finalGroups);
+      // printPairs(cent_points);
+
     }
 
 };
@@ -111,13 +164,14 @@ class kMeans {
 
 
 int main(int argc, char *argv[]){
-  vector<int> ambulance;
-  vector<patientInfo> allPatients;
-
   char separator;
   int num_Patients = 50, num_Hospital = 5, num_Ambulance, count = 0;
   string tmp_string;
   int xloc,yloc,rescuetime;
+
+  vector<pair<int,int> > hospotials_tmp;
+  vector<vector<int> > hospotials(num_Hospital);
+  vector<patientInfo> allPatients;
 
   cin.ignore(100000, '(');
   cin >> tmp_string;
@@ -134,12 +188,44 @@ int main(int argc, char *argv[]){
   count = 0;
   while (count < num_Hospital) {
     cin >> num_Ambulance;
-    ambulance.push_back(num_Ambulance);
+    hospotials_tmp.push_back(make_pair(count, num_Ambulance));
     count++;
   }
 
+  sort(hospotials_tmp.begin(), hospotials_tmp.end(), Cmp<pair<int,int > >()); //sort the vector of pair
+
   kMeans myKMean(allPatients, num_Hospital);
-  myKMean.findHospitalLocations();
+  vector<pair<int,pair<int, int> > > groupSize_centerPorint = myKMean.findHospitalLocations();
+  for(int i=0; i<groupSize_centerPorint.size(); i++) {
+    printf("group:%d\tnumPatients:%d\tlocation:[%d,%d]\n", i, groupSize_centerPorint[i].first, groupSize_centerPorint[i].second.first, groupSize_centerPorint[i].second.second);
+  }
+
+  for(int i=0; i<hospotials_tmp.size(); i++) {
+    int hospital_idx = hospotials_tmp[i].first;
+    int num_Ambulance = hospotials_tmp[i].second;
+    int hospital_locX= groupSize_centerPorint[i].second.first;
+    int hospital_locY= groupSize_centerPorint[i].second.second;
+    printf("hospotial idx:%d\tnumAmbulance:%d\tlocation:[%d,%d]\n", hospital_idx, num_Ambulance, hospital_locX, hospital_locY);
+
+    vector<int> myHospitalInfo;
+    myHospitalInfo.push_back(hospital_locX); myHospitalInfo.push_back(hospital_locY); myHospitalInfo.push_back(num_Ambulance);
+    hospotials[hospital_idx] = myHospitalInfo;
+  }
+  int ambulance_idx = 0;
+  for(int i=0; i<hospotials.size(); i++) {
+    printf("Hospital:%d|%d,%d,%d|", i, hospotials[i][0], hospotials[i][1], hospotials[i][2]);
+    for(int numAmbulance=0; numAmbulance<hospotials[i][2]; numAmbulance++) {
+      if (numAmbulance==hospotials[i][2]-1) {
+        printf("%d\n", ambulance_idx);
+      } else {
+        printf("%d,", ambulance_idx);
+      }
+      ambulance_idx++;
+    }
+  }
+
+
+
 }
 
 
