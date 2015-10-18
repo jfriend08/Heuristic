@@ -137,6 +137,18 @@ class kMeans {
       // printPairs(cent_points);
 
     }
+};
+
+class Point_class {
+private:
+  int locX, locY, rescuetime;
+  bool isHospital;
+public:
+  Point_class(int mylocX, int mylocY, bool myisHospital): locX(mylocX), locY(mylocY), isHospital(myisHospital) {}
+  Point_class(int mylocX, int mylocY, int myrescuetime, bool myisHospital): locX(mylocX), locY(mylocY), rescuetime(myrescuetime), isHospital(myisHospital) {}
+  bool getIsHospital() { return isHospital;}
+  int getX() {return locX;}
+  int getY() {return locY;}
 
 };
 
@@ -149,7 +161,8 @@ int main(int argc, char *argv[]){
   int xloc,yloc,rescuetime;
 
   vector<pair<int,int> > hospotials_tmp;
-  vector<vector<int> > hospotials(num_Hospital);
+  vector<vector<int> > Hospotials(num_Hospital);
+  vector<vector<Point_class> > Ambulances;
   vector<patientInfo> allPatients;
 
   cin.ignore(100000, '(');
@@ -189,20 +202,38 @@ int main(int argc, char *argv[]){
     printf("hospotial idx:%d\tnumAmbulance:%d\tlocation:[%d,%d]\n", hospital_idx, num_Ambulance, hospital_locX, hospital_locY);
 
     vector<int> myHospitalInfo;
+    //locX, locY, num_Ambulance
     myHospitalInfo.push_back(hospital_locX); myHospitalInfo.push_back(hospital_locY); myHospitalInfo.push_back(num_Ambulance);
-    hospotials[hospital_idx] = myHospitalInfo;
+    Hospotials[hospital_idx] = myHospitalInfo;
   }
 
   int ambulance_idx = 0;
-  for(int i=0; i<hospotials.size(); i++) {
-    printf("Hospital:%d|%d,%d,%d|", i, hospotials[i][0], hospotials[i][1], hospotials[i][2]);
-    for(int numAmbulance=0; numAmbulance<hospotials[i][2]; numAmbulance++) {
-      if (numAmbulance==hospotials[i][2]-1) {
+  for(int i=0; i<Hospotials.size(); i++) {
+    printf("Hospital:%d|%d,%d,%d|", i, Hospotials[i][0], Hospotials[i][1], Hospotials[i][2]);
+    for(int numAmbulance=0; numAmbulance<Hospotials[i][2]; numAmbulance++) {
+
+      Point_class myPoint(Hospotials[i][0], Hospotials[i][1], true); //init a point
+      vector<Point_class> tmp_AmbulancePath; //init a path vector for this ambulance
+      tmp_AmbulancePath.push_back(myPoint);
+      Ambulances.push_back(tmp_AmbulancePath); //push path vector or Ambulances
+
+      if (numAmbulance==Hospotials[i][2]-1) {
         printf("%d\n", ambulance_idx);
       } else {
         printf("%d,", ambulance_idx);
       }
       ambulance_idx++;
+    }
+  }
+
+  for (int i=0; i<Ambulances.size(); i++) {
+    int ambulance_idx = i+1;
+    vector<Point_class> ambulance_path = Ambulances[i];
+    for(int eachPoint_idx=0; eachPoint_idx<ambulance_path.size(); eachPoint_idx++) {
+      Point_class thisPoint = ambulance_path[eachPoint_idx];
+      if ( (eachPoint_idx==0) | (thisPoint.getIsHospital()) ){
+        printf("Ambulance:%d|%d,%d\n", ambulance_idx, thisPoint.getX(), thisPoint.getY());
+      }
     }
   }
 
