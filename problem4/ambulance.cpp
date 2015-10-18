@@ -35,13 +35,14 @@ class kMeans {
   public:
     kMeans(vector<patientInfo> inputAllPatients, int intputNumCluster): allPatients(inputAllPatients), numCluster(intputNumCluster) {}
 
-    pair<int, float> findClosestIdxAndDist(patientInfo patient) {
+    pair<int, int> findClosestIdxAndDist(patientInfo patient) {
       int cloestIdx;
-      float cloestedDist = FLT_MAX;
+      int cloestedDist = INT_MAX;
 
       for (int cp_idx=0; cp_idx<cent_points.size(); cp_idx++) {
-        float sqSum = pow(patient.xloc-cent_points[cp_idx].first,2) + pow(patient.yloc-cent_points[cp_idx].second,2);
-        float dist = sqrt(sqSum);
+        // float sqSum = pow(patient.xloc-cent_points[cp_idx].first,2) + pow(patient.yloc-cent_points[cp_idx].second,2);
+        // float dist = sqrt(sqSum);
+        int dist = abs(patient.xloc-cent_points[cp_idx].first) + abs(patient.yloc-cent_points[cp_idx].second);
         if (dist<cloestedDist) {
           cloestedDist = dist;
           cloestIdx = cp_idx;
@@ -73,39 +74,9 @@ class kMeans {
       }
     }
 
-    void updateCentPointsByLife(vector<vector<patientInfo> > &Groups) {
-      // for each group
-      for(int i=0; i<Groups.size(); i++){
-        // for each points in group
-        float totalX=0, totalY=0;
-        float thisGroupSize = Groups[i].size();
-        int time_lowBound=INT_MAX, time_upBound=INT_MIN;
-        float timeInterval;
-        for (int member=0; member<thisGroupSize; member++) {
-          if(Groups[i][member].rescuetime > time_upBound) {
-            time_upBound = Groups[i][member].rescuetime;
-          }
-          if(Groups[i][member].rescuetime < time_lowBound) {
-            time_lowBound = Groups[i][member].rescuetime;
-          }
-        }
-
-        timeInterval = (time_upBound - time_lowBound);
-
-        for (int member=0; member<thisGroupSize; member++) {
-          float weighting = (timeInterval-Groups[i][member].rescuetime)/timeInterval;
-          totalX += Groups[i][member].xloc * weighting;
-          totalY += Groups[i][member].yloc * weighting;
-        }
-        cent_points[i].first = totalX/thisGroupSize;
-        cent_points[i].second = totalY/thisGroupSize;
-        // make_pair(totalX/thisGroupSize, totalY/thisGroupSize);
-      }
-    }
-
     vector<pair<int,pair<int, int> > > findHospitalLocations() {
       map<int, bool> seen;
-      float totalCloestDist_cur=0, totalCloestDist_prev=FLT_MAX;
+      float totalCloestDist_cur=0, totalCloestDist_prev = FLT_MAX;
       vector<vector<patientInfo> > finalGroups(numCluster);
 
       //cent_points init: randomly pick up cent_points from data
@@ -116,16 +87,16 @@ class kMeans {
           cent_points.push_back(make_pair(allPatients[init_cent_idx].xloc, allPatients[init_cent_idx].yloc));
         }
       }
-
       while( fabs(totalCloestDist_cur-totalCloestDist_prev)/totalCloestDist_prev > 0.01 ){
         printf("------------------------------\n");
-        totalCloestDist_prev = totalCloestDist_cur;
+        totalCloestDist_prev = totalCloestDist_cur==0 ? INT_MAX:totalCloestDist_cur;
         totalCloestDist_cur = 0;
         vector<vector<patientInfo> > Groups(numCluster);
         for(int eachPoint_idx = 0; eachPoint_idx<allPatients.size(); eachPoint_idx++){
           int cloestedDist = INT_MAX;
-          pair<int, float> idx_dist = findClosestIdxAndDist(allPatients[eachPoint_idx]);
+          pair<int, long int> idx_dist = findClosestIdxAndDist(allPatients[eachPoint_idx]);
           Groups[idx_dist.first].push_back(allPatients[eachPoint_idx]);
+          // cout<<"idx_dist.second: "<<idx_dist.second<<endl;
           totalCloestDist_cur += idx_dist.second;
         }
 
@@ -135,6 +106,7 @@ class kMeans {
 
         printf("totalCloestDist_prev: %f\n", totalCloestDist_prev);
         printf("totalCloestDist_cur: %f\n", totalCloestDist_cur);
+        cout<<float(fabs(totalCloestDist_cur-totalCloestDist_prev)/totalCloestDist_prev)<<endl;
 
         printf("cent_points before:\n");
         printPairs(cent_points);
