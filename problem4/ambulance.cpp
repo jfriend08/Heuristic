@@ -259,6 +259,29 @@ public:
 
   }
 
+  void printAmbulance(vector<vector<Point_class> > &Ambulances) {
+    for (int i=0; i<Ambulances.size(); i++) {
+      int ambulance_idx = i+1;
+      vector<Point_class> ambulance_path = Ambulances[i];
+      for(int eachPoint_idx=0; eachPoint_idx<ambulance_path.size(); eachPoint_idx++) {
+        Point_class thisPoint = ambulance_path[eachPoint_idx];
+        if ( thisPoint.getIsHospital() ){
+          printf("Ambulance:%d|%d,%d|", ambulance_idx, thisPoint.getX(), thisPoint.getY());
+        }
+        else if (!thisPoint.getIsHospital()) {
+          for (; (eachPoint_idx+1<ambulance_path.size()) & (!ambulance_path[eachPoint_idx+1].getIsHospital()); eachPoint_idx++) {
+            thisPoint = ambulance_path[eachPoint_idx];
+            printf("%d,%d,%d,%d;", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
+          }
+        }
+        if ((eachPoint_idx+1<ambulance_path.size()) & (ambulance_path[eachPoint_idx+1].getIsHospital()) ) {
+          printf("|%d,%d\n", ambulance_path[eachPoint_idx+1].getX(), ambulance_path[eachPoint_idx+1].getY());
+        }
+      }
+      printf("\n");
+    }
+  }
+
   void ambulanceScheduling(vector<vector<Point_class> > &Ambulances, vector<patientInfo> &allPatients, vector<vector<int> > Hospotials) {
     int noPatientCanSavedCount = 0;
     while( noPatientCanSavedCount!= Ambulances.size() & allPatients.size()>0) {
@@ -282,10 +305,10 @@ public:
 
         Point_class myPoint(allPatients[patient_idx].patientIdx, allPatients[patient_idx].xloc,allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime, false);
         Ambulances[ambu_idx].push_back(myPoint);
-        cout<< allPatients.size()<<endl;
         allPatients.erase (allPatients.begin()+patient_idx);
-        cout<< allPatients.size()<<endl;
       }
+      printAmbulance(Ambulances);
+      printf("----------------------------- %lu Patient Remained  -----------------------------\n", allPatients.size());
     }
   }
 
@@ -366,22 +389,7 @@ int main(int argc, char *argv[]){
 
   Schedule scheduleClass;
   scheduleClass.ambulanceScheduling(Ambulances, allPatients, Hospotials);
-
-  for (int i=0; i<Ambulances.size(); i++) {
-    int ambulance_idx = i+1;
-    vector<Point_class> ambulance_path = Ambulances[i];
-    for(int eachPoint_idx=0; eachPoint_idx<ambulance_path.size(); eachPoint_idx++) {
-      Point_class thisPoint = ambulance_path[eachPoint_idx];
-      if ( (eachPoint_idx==0) | (thisPoint.getIsHospital()) ){
-        printf("Ambulance:%d|%d,%d|", ambulance_idx, thisPoint.getX(), thisPoint.getY());
-      } else if (!thisPoint.getIsHospital()) {
-        printf("%d,%d,%d,%d\n", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
-      }
-    }
-  }
-
-
-
+  scheduleClass.printAmbulance(Ambulances);
 }
 
 
