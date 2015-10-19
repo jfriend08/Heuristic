@@ -186,24 +186,29 @@ public:
     }
     return dist;
   }
-  int findAvailableShortestPatient_idx(pair<int, int> curLoc, vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials) {
+  int findAvailableShortestPatient_idx(pair<int, int> curLoc, vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials, vector<Point_class> cur_Ambulance) {
     int shortestAvailablePatient_idx = -1;
+    int minDistAmbulanceToPatient=INT_MAX;
     for (int p_idx=0; p_idx<allPatients.size(); p_idx++) {
-      int dist_A_P, distPatientToCloestHostipal=INT_MAX, minDistAmbulanceToPatient=INT_MAX;
+      int dist_A_P, distPatientToCloestHostipal=INT_MAX;
       pair<int, int> patientLoc = make_pair(allPatients[p_idx].xloc, allPatients[p_idx].yloc);
+
+      Point_class myPoint(allPatients[p_idx].patientIdx, allPatients[p_idx].xloc,allPatients[p_idx].yloc, allPatients[p_idx].rescuetime, false);
+      vector<Point_class> testAmbulanceRout = cur_Ambulance;
+      testAmbulanceRout.push_back(myPoint);
 
       dist_A_P = getDist(curLoc, patientLoc);
 
       for (int hop_idx=0; hop_idx<Hospotials.size(); hop_idx++) {
         pair<int, int> hospotialLoc = make_pair(Hospotials[hop_idx][0],Hospotials[hop_idx][1]);
-
         int dis_P_H = getDist(hospotialLoc, patientLoc);
-
         if (distPatientToCloestHostipal > dis_P_H) {
           distPatientToCloestHostipal = dis_P_H;
         }
       }
-      if (distPatientToCloestHostipal < allPatients[p_idx].rescuetime && minDistAmbulanceToPatient>dist_A_P) {
+
+      if (noPatienWouldDie(timeNow, distPatientToCloestHostipal, testAmbulanceRout) && minDistAmbulanceToPatient > dist_A_P) {
+        minDistAmbulanceToPatient = dist_A_P;
         shortestAvailablePatient_idx = p_idx;
       }
     }
@@ -212,23 +217,24 @@ public:
   }
   int findPatientOnRoute(vector<Point_class> cur_Ambulance, vector<patientInfo> allPatients, vector<vector<int> > Hospotials) {
     int timeNow = findCurrentTime(cur_Ambulance);
+    cout<<"timeNow: "<<timeNow<<endl;
     int curX = cur_Ambulance[cur_Ambulance.size()-1].getX();
     int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
     cout<<"findPatientOnRoute. allPatients.size(): "<< allPatients.size()<<endl;
-    int patient_idx = findAvailableShortestPatient_idx(make_pair(curX, curY), allPatients, timeNow, Hospotials);
-    printf("my location: [%d,%d]\tShortest Patient Location: [%d,%d,%d]\n", curX, curY, allPatients[patient_idx].xloc, allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime);
+    int patient_idx = findAvailableShortestPatient_idx(make_pair(curX, curY), allPatients, timeNow, Hospotials, cur_Ambulance);
+    // printf("my location: [%d,%d]\tShortest Patient Location: [%d,%d,%d]\n", curX, curY, allPatients[patient_idx].xloc, allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime);
     return patient_idx;
-
   }
 
   bool noPatienWouldDie(int timeNow, int dist2H, vector<Point_class> cur_Ambulance) {
     int idxOfPatientOnCar;
+    if(cur_Ambulance.size())
     for (idxOfPatientOnCar=cur_Ambulance.size()-1; idxOfPatientOnCar>0; idxOfPatientOnCar--) {
       if(cur_Ambulance[idxOfPatientOnCar].getIsHospital()) {break;}
     }
     idxOfPatientOnCar++;
 
-    for (; idxOfPatientOnCar<cur_Ambulance.size(); idxOfPatientOnCar++) {
+    for (idxOfPatientOnCar=idxOfPatientOnCar; idxOfPatientOnCar<cur_Ambulance.size(); idxOfPatientOnCar++) {
       if (cur_Ambulance[idxOfPatientOnCar].getRescutime() < timeNow+dist2H ){
         return false;
       }
@@ -236,9 +242,11 @@ public:
     return true;
   }
 
-  void findHosptialOfCurrentRout(vector<Point_class> &cur_Ambulance, vector<vector<int> > Hospotials) {
+  int findHosptialOfCurrentRout(vector<Point_class> cur_Ambulance, vector<vector<int> > Hospotials) {
+    cout<<"findHosptialOfCurrentRout"<<endl;
     int shortest_dist2H = INT_MAX;
     vector<int> shortest_hospital;
+    int shortest_hospital_idx;
     int timeNow = findCurrentTime(cur_Ambulance);
     int curX = cur_Ambulance[cur_Ambulance.size()-1].getX();
     int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
@@ -248,14 +256,20 @@ public:
     for(int i=0; i<Hospotials.size(); i++) {
       pair <int,int> thisHospitalLoc = make_pair(Hospotials[i][0], Hospotials[i][1]);
       int dist2H = getDist(myLoc, thisHospitalLoc);
+      // if (!noPatienWouldDie(timeNow, dist2H, cur_Ambulance)) {
+      //   cout<<"patient will die if choose this hospital"<<endl;
+      // }
       if (noPatienWouldDie(timeNow, dist2H, cur_Ambulance) && shortest_dist2H > dist2H) {
         shortest_dist2H = dist2H;
         shortest_hospital = Hospotials[i];
+        shortest_hospital_idx = i;
       }
     }
+    return shortest_hospital_idx;
+    // printf("found shortest_hospital: [%d,%d]\n", shortest_hospital[0], shortest_hospital[1]);
 
-    Point_class myPoint(shortest_hospital[0], shortest_hospital[1], true); //init a point
-    cur_Ambulance.push_back(myPoint);
+    // Point_class myPoint(shortest_hospital[0], shortest_hospital[1], true); //init a point
+    // cur_Ambulance.push_back(myPoint);
 
   }
 
@@ -263,19 +277,22 @@ public:
     for (int i=0; i<Ambulances.size(); i++) {
       int ambulance_idx = i+1;
       vector<Point_class> ambulance_path = Ambulances[i];
+
       for(int eachPoint_idx=0; eachPoint_idx<ambulance_path.size(); eachPoint_idx++) {
         Point_class thisPoint = ambulance_path[eachPoint_idx];
         if ( thisPoint.getIsHospital() ){
-          printf("Ambulance:%d|%d,%d|", ambulance_idx, thisPoint.getX(), thisPoint.getY());
+          printf("size %lu Ambulance:%d|%d,%d|", ambulance_path.size(), ambulance_idx, thisPoint.getX(), thisPoint.getY());
         }
         else if (!thisPoint.getIsHospital()) {
-          for (; (eachPoint_idx+1<ambulance_path.size()) & (!ambulance_path[eachPoint_idx+1].getIsHospital()); eachPoint_idx++) {
+          while(!thisPoint.getIsHospital() && eachPoint_idx<ambulance_path.size()) {
             thisPoint = ambulance_path[eachPoint_idx];
             printf("%d,%d,%d,%d;", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
+            eachPoint_idx++;
           }
         }
-        if ((eachPoint_idx+1<ambulance_path.size()) & (ambulance_path[eachPoint_idx+1].getIsHospital()) ) {
-          printf("|%d,%d\n", ambulance_path[eachPoint_idx+1].getX(), ambulance_path[eachPoint_idx+1].getY());
+        if ((eachPoint_idx+1<=ambulance_path.size()) & (ambulance_path[eachPoint_idx+1].getIsHospital()) ) {
+          thisPoint = ambulance_path[eachPoint_idx+1];
+          printf("|%d,%d eachPoint_idx is: %d\n", thisPoint.getX(), thisPoint.getY(), eachPoint_idx);
         }
       }
       printf("\n");
@@ -291,7 +308,11 @@ public:
         vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
         if (cur_Ambulance.size()==4) {
           //meet max capacity. find cloest hospital
-          findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
+          printf("Too many patient on car: %lu\n", cur_Ambulance.size());
+          int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
+          Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
+          Ambulances[ambu_idx].push_back(myPoint);
+          printf("after findHosptialOfCurrentRout: %lu\n", cur_Ambulance.size());
           continue;
         }
         int patient_idx = findPatientOnRoute(cur_Ambulance, allPatients, Hospotials);
@@ -299,7 +320,9 @@ public:
         if (patient_idx==-1) {
           //no available patient for this ambulance. find cloest hospital
           noPatientCanSavedCount++;
-          findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
+          int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
+          Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
+          Ambulances[ambu_idx].push_back(myPoint);
           continue;
         }
 
