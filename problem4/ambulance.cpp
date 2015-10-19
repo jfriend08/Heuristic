@@ -153,6 +153,7 @@ public:
   int getX() {return locX;}
   int getY() {return locY;}
   int getRescutime() {return rescuetime;}
+  void updateRescuetime(int mytime) {rescuetime = mytime;}
 
 };
 
@@ -280,8 +281,11 @@ public:
 
       for(int eachPoint_idx=0; eachPoint_idx<ambulance_path.size(); eachPoint_idx++) {
         Point_class thisPoint = ambulance_path[eachPoint_idx];
-        if ( thisPoint.getIsHospital() ){
-          printf("size %lu Ambulance:%d|%d,%d|", ambulance_path.size(), ambulance_idx, thisPoint.getX(), thisPoint.getY());
+        if ( (eachPoint_idx!=ambulance_path.size()-1) && (thisPoint.getIsHospital()) ){
+          if (ambulance_path[eachPoint_idx+1].getIsHospital()) {
+            continue;
+          }
+          printf("Ambulance:%d|%d,%d|", ambulance_idx, thisPoint.getX(), thisPoint.getY());
         }
         else if (!thisPoint.getIsHospital()) {
           int marching_idx = eachPoint_idx+1;
@@ -307,6 +311,12 @@ public:
       }
     }
   }
+  void patientTimeToLiveUpdate(vector<Point_class> &cur_Ambulance) {
+    int timeNow = findCurrentTime(cur_Ambulance);
+    for(int idx=cur_Ambulance.size()-1-1; !cur_Ambulance[idx].getIsHospital(); idx--) {
+      cur_Ambulance[idx].updateRescuetime(cur_Ambulance[idx].getRescutime()-timeNow);
+    }
+  }
 
   void ambulanceScheduling(vector<vector<Point_class> > &Ambulances, vector<patientInfo> &allPatients, vector<vector<int> > Hospotials) {
     int noPatientCanSavedCount = 0;
@@ -322,6 +332,7 @@ public:
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
           Ambulances[ambu_idx].push_back(myPoint);
+          patientTimeToLiveUpdate(Ambulances[ambu_idx]);
           printf("after findHosptialOfCurrentRout: %lu\n", cur_Ambulance.size());
           continue;
         }
@@ -335,6 +346,7 @@ public:
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
           Ambulances[ambu_idx].push_back(myPoint);
+          patientTimeToLiveUpdate(Ambulances[ambu_idx]);
           continue;
         }
 
