@@ -284,18 +284,27 @@ public:
           printf("size %lu Ambulance:%d|%d,%d|", ambulance_path.size(), ambulance_idx, thisPoint.getX(), thisPoint.getY());
         }
         else if (!thisPoint.getIsHospital()) {
-          while(!thisPoint.getIsHospital() && eachPoint_idx<ambulance_path.size()) {
-            thisPoint = ambulance_path[eachPoint_idx];
-            printf("%d,%d,%d,%d;", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
-            eachPoint_idx++;
+          int marching_idx = eachPoint_idx+1;
+          while(marching_idx<ambulance_path.size() && !ambulance_path[marching_idx].getIsHospital()) {
+            marching_idx++;
+          }
+          for(int tmpIdx=eachPoint_idx; tmpIdx<marching_idx; tmpIdx++) {
+            Point_class thisPoint = ambulance_path[tmpIdx];
+            if (tmpIdx<marching_idx-1){
+              printf("%d,%d,%d,%d;", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
+            } else {
+              printf("%d,%d,%d,%d|", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
+            }
+          }
+          if (marching_idx<ambulance_path.size()){
+            Point_class thisPoint = ambulance_path[marching_idx];
+            printf("%d,%d\n", thisPoint.getX(), thisPoint.getY());
+            eachPoint_idx = marching_idx-1;
+          } else {
+            printf("\n");
           }
         }
-        if ((eachPoint_idx+1<=ambulance_path.size()) & (ambulance_path[eachPoint_idx+1].getIsHospital()) ) {
-          thisPoint = ambulance_path[eachPoint_idx+1];
-          printf("|%d,%d eachPoint_idx is: %d\n", thisPoint.getX(), thisPoint.getY(), eachPoint_idx);
-        }
       }
-      printf("\n");
     }
   }
 
