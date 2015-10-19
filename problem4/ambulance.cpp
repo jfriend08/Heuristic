@@ -207,7 +207,7 @@ public:
         }
       }
 
-      if (noPatienWouldDie(timeNow, distPatientToCloestHostipal, testAmbulanceRout) && minDistAmbulanceToPatient > dist_A_P) {
+      if (noPatienWouldDie(findCurrentTime(testAmbulanceRout), distPatientToCloestHostipal, testAmbulanceRout) && minDistAmbulanceToPatient > dist_A_P) {
         minDistAmbulanceToPatient = dist_A_P;
         shortestAvailablePatient_idx = p_idx;
       }
@@ -228,7 +228,6 @@ public:
 
   bool noPatienWouldDie(int timeNow, int dist2H, vector<Point_class> cur_Ambulance) {
     int idxOfPatientOnCar;
-    if(cur_Ambulance.size())
     for (idxOfPatientOnCar=cur_Ambulance.size()-1; idxOfPatientOnCar>0; idxOfPatientOnCar--) {
       if(cur_Ambulance[idxOfPatientOnCar].getIsHospital()) {break;}
     }
@@ -246,7 +245,7 @@ public:
     cout<<"findHosptialOfCurrentRout"<<endl;
     int shortest_dist2H = INT_MAX;
     vector<int> shortest_hospital;
-    int shortest_hospital_idx;
+    int shortest_hospital_idx=-1;
     int timeNow = findCurrentTime(cur_Ambulance);
     int curX = cur_Ambulance[cur_Ambulance.size()-1].getX();
     int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
@@ -265,6 +264,7 @@ public:
         shortest_hospital_idx = i;
       }
     }
+    cout<<"shortest_hospital_idx: "<<shortest_hospital_idx<<endl;
     return shortest_hospital_idx;
     // printf("found shortest_hospital: [%d,%d]\n", shortest_hospital[0], shortest_hospital[1]);
 
@@ -314,6 +314,7 @@ public:
       noPatientCanSavedCount = 0;
 
       for(int ambu_idx=0; ambu_idx<Ambulances.size(); ambu_idx++) {
+        printf("ambulance idex: %d\t", ambu_idx+1);
         vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
         if (cur_Ambulance.size()==4) {
           //meet max capacity. find cloest hospital
@@ -324,10 +325,12 @@ public:
           printf("after findHosptialOfCurrentRout: %lu\n", cur_Ambulance.size());
           continue;
         }
+
         int patient_idx = findPatientOnRoute(cur_Ambulance, allPatients, Hospotials);
 
         if (patient_idx==-1) {
           //no available patient for this ambulance. find cloest hospital
+          printf("Need to return hospital\n");
           noPatientCanSavedCount++;
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
