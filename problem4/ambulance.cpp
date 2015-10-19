@@ -218,10 +218,10 @@ public:
   }
   int findPatientOnRoute(vector<Point_class> cur_Ambulance, vector<patientInfo> allPatients, vector<vector<int> > Hospotials) {
     int timeNow = findCurrentTime(cur_Ambulance);
-    cout<<"timeNow: "<<timeNow<<endl;
+    // cout<<"timeNow: "<<timeNow<<endl;
     int curX = cur_Ambulance[cur_Ambulance.size()-1].getX();
     int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
-    cout<<"findPatientOnRoute. allPatients.size(): "<< allPatients.size()<<endl;
+    // cout<<"findPatientOnRoute. allPatients.size(): "<< allPatients.size()<<endl;
     int patient_idx = findAvailableShortestPatient_idx(make_pair(curX, curY), allPatients, timeNow, Hospotials, cur_Ambulance);
     // printf("my location: [%d,%d]\tShortest Patient Location: [%d,%d,%d]\n", curX, curY, allPatients[patient_idx].xloc, allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime);
     return patient_idx;
@@ -243,7 +243,7 @@ public:
   }
 
   int findHosptialOfCurrentRout(vector<Point_class> cur_Ambulance, vector<vector<int> > Hospotials) {
-    cout<<"findHosptialOfCurrentRout"<<endl;
+    // cout<<"findHosptialOfCurrentRout"<<endl;
     int shortest_dist2H = INT_MAX;
     vector<int> shortest_hospital;
     int shortest_hospital_idx=-1;
@@ -265,7 +265,7 @@ public:
         shortest_hospital_idx = i;
       }
     }
-    cout<<"shortest_hospital_idx: "<<shortest_hospital_idx<<endl;
+    // cout<<"shortest_hospital_idx: "<<shortest_hospital_idx<<endl;
     return shortest_hospital_idx;
     // printf("found shortest_hospital: [%d,%d]\n", shortest_hospital[0], shortest_hospital[1]);
 
@@ -324,16 +324,16 @@ public:
       noPatientCanSavedCount = 0;
 
       for(int ambu_idx=0; ambu_idx<Ambulances.size(); ambu_idx++) {
-        printf("ambulance idex: %d\t", ambu_idx+1);
+        // printf("ambulance idex: %d\t", ambu_idx+1);
         vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
         if (cur_Ambulance.size()==4) {
           //meet max capacity. find cloest hospital
-          printf("Too many patient on car: %lu\n", cur_Ambulance.size());
+          // printf("Too many patient on car: %lu\n", cur_Ambulance.size());
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
           Ambulances[ambu_idx].push_back(myPoint);
           patientTimeToLiveUpdate(Ambulances[ambu_idx]);
-          printf("after findHosptialOfCurrentRout: %lu\n", cur_Ambulance.size());
+          // printf("after findHosptialOfCurrentRout: %lu\n", cur_Ambulance.size());
           continue;
         }
 
@@ -341,7 +341,7 @@ public:
 
         if (patient_idx==-1) {
           //no available patient for this ambulance. find cloest hospital
-          printf("Need to return hospital\n");
+          // printf("Need to return hospital\n");
           noPatientCanSavedCount++;
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
@@ -354,7 +354,7 @@ public:
         Ambulances[ambu_idx].push_back(myPoint);
         allPatients.erase (allPatients.begin()+patient_idx);
       }
-      printAmbulance(Ambulances);
+      // printAmbulance(Ambulances);
       printf("----------------------------- %lu Patient Remained  -----------------------------\n", allPatients.size());
     }
   }
@@ -378,7 +378,7 @@ int main(int argc, char *argv[]){
 
   while (count < num_Patients) {
     cin >> xloc >> separator >> yloc >> separator >> rescuetime;
-    printf("%d\t%d\t%d\n", xloc, yloc, rescuetime);
+    // printf("%d\t%d\t%d\n", xloc, yloc, rescuetime);
     patientInfo myPatient(count+1, xloc, yloc, rescuetime);
     allPatients.push_back(myPatient);
     count++;
@@ -398,7 +398,7 @@ int main(int argc, char *argv[]){
   kMeans myKMean(allPatients, num_Hospital);
   vector<pair<int,pair<int, int> > > groupSize_centerPorint = myKMean.findHospitalLocations();
   for(int i=0; i<groupSize_centerPorint.size(); i++) {
-    printf("group:%d\tnumPatients:%d\tlocation:[%d,%d]\n", i, groupSize_centerPorint[i].first, groupSize_centerPorint[i].second.first, groupSize_centerPorint[i].second.second);
+    // printf("group:%d\tnumPatients:%d\tlocation:[%d,%d]\n", i, groupSize_centerPorint[i].first, groupSize_centerPorint[i].second.first, groupSize_centerPorint[i].second.second);
   }
 
   //
@@ -407,7 +407,7 @@ int main(int argc, char *argv[]){
     int num_Ambulance = hospotials_tmp[i].second;
     int hospital_locX= groupSize_centerPorint[i].second.first;
     int hospital_locY= groupSize_centerPorint[i].second.second;
-    printf("hospotial idx:%d\tnumAmbulance:%d\tlocation:[%d,%d]\n", hospital_idx, num_Ambulance, hospital_locX, hospital_locY);
+    // printf("hospotial idx:%d\tnumAmbulance:%d\tlocation:[%d,%d]\n", hospital_idx, num_Ambulance, hospital_locX, hospital_locY);
 
     vector<int> myHospitalInfo;
     //locX, locY, num_Ambulance
@@ -417,7 +417,7 @@ int main(int argc, char *argv[]){
 
   int ambulance_idx = 0;
   for(int i=0; i<Hospotials.size(); i++) {
-    printf("Hospital:%d|%d,%d,%d|", i, Hospotials[i][0], Hospotials[i][1], Hospotials[i][2]);
+    printf("Hospital:%d|%d,%d,%d|", i+1, Hospotials[i][0], Hospotials[i][1], Hospotials[i][2]);
     for(int numAmbulance=0; numAmbulance<Hospotials[i][2]; numAmbulance++) {
 
       Point_class myPoint(Hospotials[i][0], Hospotials[i][1], true); //init a point
@@ -426,9 +426,9 @@ int main(int argc, char *argv[]){
       Ambulances.push_back(tmp_AmbulancePath); //push path vector or Ambulances
 
       if (numAmbulance==Hospotials[i][2]-1) {
-        printf("%d\n", ambulance_idx);
+        printf("%d\n", ambulance_idx+1);
       } else {
-        printf("%d,", ambulance_idx);
+        printf("%d,", ambulance_idx+1);
       }
       ambulance_idx++;
     }
