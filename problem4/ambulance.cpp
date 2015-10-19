@@ -13,8 +13,8 @@
 using namespace std;
 
 struct patientInfo {
-  int xloc,yloc,rescuetime;
-  patientInfo(int myxloc, int myyloc, int myrescuetime): xloc(myxloc), yloc(myyloc), rescuetime(myrescuetime){}
+  int patientIdx,xloc,yloc,rescuetime;
+  patientInfo(int myPatientIdx, int myxloc, int myyloc, int myrescuetime): patientIdx(myPatientIdx), xloc(myxloc), yloc(myyloc), rescuetime(myrescuetime){}
 } ;
 //later can be used to sort list of pair
 template<typename P> struct Cmp {
@@ -141,14 +141,18 @@ class kMeans {
 
 class Point_class {
 private:
-  int locX, locY, rescuetime;
+  int patient_idx, locX, locY, rescuetime;
   bool isHospital;
 public:
+  //for hospital
   Point_class(int mylocX, int mylocY, bool myisHospital): locX(mylocX), locY(mylocY), isHospital(myisHospital) {}
-  Point_class(int mylocX, int mylocY, int myrescuetime, bool myisHospital): locX(mylocX), locY(mylocY), rescuetime(myrescuetime), isHospital(myisHospital) {}
+  //for patient
+  Point_class(int myPatientIdx, int mylocX, int mylocY, int myrescuetime, bool myisHospital): patient_idx(myPatientIdx), locX(mylocX), locY(mylocY), rescuetime(myrescuetime), isHospital(myisHospital) {}
   bool getIsHospital() { return isHospital;}
+  int getPatientIdex() {return patient_idx;}
   int getX() {return locX;}
   int getY() {return locY;}
+  int getRescutime() {return rescuetime;}
 
 };
 
@@ -163,80 +167,67 @@ public:
       return -1;
     }
   }
-  vector<patientInfo> findAvailableChoices(pair<int, int> curLoc, vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials) {
-    vector<patientInfo> allAvailablePatients;
+  int getDist(pair<int, int> thisLoc, pair<int, int> thatLoc) {
+    int dist;
+    if (distanceMap.find(make_pair(thisLoc, thatLoc)) != distanceMap.end()) {
+      dist = distanceMap[make_pair(thisLoc, thatLoc)];
+    } else {
+      dist = abs(thisLoc.first- thatLoc.first)+abs(thisLoc.second-thatLoc.second);
+      distanceMap[make_pair(thisLoc, thatLoc)] = dist;
+      distanceMap[make_pair(thatLoc, thisLoc)] = dist;
+    }
+    return dist;
+  }
+  int findAvailableShortestPatient_idx(pair<int, int> curLoc, vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials) {
+    int shortestAvailablePatient_idx;
     for (int p_idx=0; p_idx<allPatients.size(); p_idx++) {
-      int dist, distPatientToCloestHostipal=INT_MAX;
+      int dist_A_P, distPatientToCloestHostipal=INT_MAX, minDistAmbulanceToPatient=INT_MAX;
       pair<int, int> patientLoc = make_pair(allPatients[p_idx].xloc, allPatients[p_idx].yloc);
-      if (distanceMap.find(make_pair(curLoc, patientLoc)) != distanceMap.end()) {
-        dist = distanceMap[make_pair(curLoc, patientLoc)];
-      } else {
-        dist = abs(patientLoc.first-curLoc.first)+abs(patientLoc.second-curLoc.second);
-        distanceMap[make_pair(curLoc, patientLoc)] = dist;
-        distanceMap[make_pair(patientLoc, curLoc)] = dist;
-      }
+
+      dist_A_P = getDist(curLoc, patientLoc);
 
       for (int hop_idx=0; hop_idx<Hospotials.size(); hop_idx++) {
         pair<int, int> hospotialLoc = make_pair(Hospotials[hop_idx][0],Hospotials[hop_idx][1]);
-        int dis_P_H;
-        if (distanceMap.find(make_pair(hospotialLoc, patientLoc)) != distanceMap.end()) {
-          dis_P_H = distanceMap[make_pair(hospotialLoc, patientLoc)];
-        } else {
-          dis_P_H = abs(hospotialLoc.first-patientLoc.first) + abs(hospotialLoc.second-patientLoc.second);
-          distanceMap[make_pair(hospotialLoc, patientLoc)] = dis_P_H;
-          distanceMap[make_pair(patientLoc, hospotialLoc)] = dis_P_H;
-        }
+
+        int dis_P_H = getDist(hospotialLoc, patientLoc);
+
         if (distPatientToCloestHostipal > dis_P_H) {
           distPatientToCloestHostipal = dis_P_H;
         }
       }
 
-      if (distPatientToCloestHostipal < allPatients[p_idx].rescuetime) {
-        allAvailablePatients.push_back(allPatients[p_idx]);
+      if (distPatientToCloestHostipal < allPatients[p_idx].rescuetime && minDistAmbulanceToPatient>dist_A_P) {
+        shortestAvailablePatient_idx = p_idx;
       }
     }
-    return allAvailablePatients;
+    return shortestAvailablePatient_idx;
 
   }
-  vector<patientInfo> findPatientOnRoute(vector<Point_class> cur_Ambulance, vector<patientInfo> allPatients, vector<vector<int> > Hospotials) {
-    vector<patientInfo> myPatients;
+  int findPatientOnRoute(vector<Point_class> cur_Ambulance, vector<patientInfo> allPatients, vector<vector<int> > Hospotials) {
+    // patientInfo myPatient;
     int timeNow = findCurrentTime(cur_Ambulance);
     int curX = cur_Ambulance[cur_Ambulance.size()-1].getX();
     int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
-    while(myPatients.size()< 4) {
-      findAvailableChoices(make_pair(curX, curY), allPatients, timeNow, Hospotials);
-      // vector<patientInfo> patientChoices = findAvailableChoices(make_pair(curX, curY), allPatients, timeNow, Hospotials);
-    }
-    myPatients.push_back(allPatients[0]);
-
-
-    return myPatients;
+    cout<<"findPatientOnRoute. allPatients.size(): "<< allPatients.size()<<endl;
+    int patient_idx = findAvailableShortestPatient_idx(make_pair(curX, curY), allPatients, timeNow, Hospotials);
+    printf("my location: [%d,%d]\tShortest Patient Location: [%d,%d,%d]\n", curX, curY, allPatients[patient_idx].xloc, allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime);
+    return patient_idx;
 
   }
-  // void distMapInit(int size) {
-  //   distanceMap.resize(size);
-  //   for (int i = 0; i < size; ++i){
-  //     distanceMap[i].resize(size);
-  //   }
-  //   for (int i=0; i<size; i++) {
-  //     for (int j=0; j<size; j++) {
-  //       if (i==j){
-  //         distanceMap[i][j] = 0;
-  //       } else {
-  //         distanceMap[i][j] = -1;
-  //       }
-  //     }
-  //   }
-  // }
 
   void ambulanceScheduling(vector<vector<Point_class> > &Ambulances, vector<patientInfo> &allPatients, vector<vector<int> > Hospotials) {
-    // distMapInit(allPatients.size()+Hospotials.size());
 
     for(int ambu_idx=0; ambu_idx<Ambulances.size(); ambu_idx++) {
       vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
-      vector<patientInfo> patientToPickUp = findPatientOnRoute(cur_Ambulance, allPatients, Hospotials);
+
+      int patient_idx = findPatientOnRoute(cur_Ambulance, allPatients, Hospotials);
+
+      Point_class myPoint(allPatients[patient_idx].patientIdx, allPatients[patient_idx].xloc,allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime, false);
+      Ambulances[ambu_idx].push_back(myPoint);
+      cout<< allPatients.size()<<endl;
+      allPatients.erase (allPatients.begin()+patient_idx);
+      cout<< allPatients.size()<<endl;
     }
-    cout<< allPatients.size()<<endl;
 
 
   }
@@ -265,7 +256,7 @@ int main(int argc, char *argv[]){
   while (count < num_Patients) {
     cin >> xloc >> separator >> yloc >> separator >> rescuetime;
     printf("%d\t%d\t%d\n", xloc, yloc, rescuetime);
-    patientInfo myPatient(xloc, yloc, rescuetime);
+    patientInfo myPatient(count+1, xloc, yloc, rescuetime);
     allPatients.push_back(myPatient);
     count++;
   }
@@ -329,7 +320,9 @@ int main(int argc, char *argv[]){
     for(int eachPoint_idx=0; eachPoint_idx<ambulance_path.size(); eachPoint_idx++) {
       Point_class thisPoint = ambulance_path[eachPoint_idx];
       if ( (eachPoint_idx==0) | (thisPoint.getIsHospital()) ){
-        printf("Ambulance:%d|%d,%d\n", ambulance_idx, thisPoint.getX(), thisPoint.getY());
+        printf("Ambulance:%d|%d,%d|", ambulance_idx, thisPoint.getX(), thisPoint.getY());
+      } else if (!thisPoint.getIsHospital()) {
+        printf("%d,%d,%d,%d\n", thisPoint.getPatientIdex(), thisPoint.getX(), thisPoint.getY(), thisPoint.getRescutime());
       }
     }
   }
