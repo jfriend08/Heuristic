@@ -152,6 +152,70 @@ public:
 
 };
 
+class Schedule {
+private:
+  vector<vector<int> > distanceMap;
+public:
+  int findCurrentTime(vector<Point_class> cur_Ambulance) {
+    if (cur_Ambulance.size() == 1) {
+      return 0;
+    } else {
+      return -1;
+    }
+  }
+  // vector<patientInfo> findAvailableChoices(vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials) {
+
+  // }
+  vector<patientInfo> findPatientOnRoute(vector<Point_class> cur_Ambulance, vector<patientInfo> allPatients, vector<vector<int> > Hospotials) {
+    vector<patientInfo> myPatients;
+    int timeNow = findCurrentTime(cur_Ambulance);
+    int curX = cur_Ambulance[cur_Ambulance.size()-1].getX();
+    int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
+    while(myPatients.size()< 4) {
+      // vector<patientInfo> patientChoices = findAvailableChoices(allPatients, timeNow, Hospotials);
+    }
+    myPatients.push_back(allPatients[0]);
+
+
+    return myPatients;
+
+  }
+  void distMapInit(int size) {
+    distanceMap.resize(size);
+    for (int i = 0; i < size; ++i){
+      distanceMap[i].resize(size);
+    }
+    for (int i=0; i<size; i++) {
+      for (int j=0; j<size; j++) {
+        if (i==j){
+          distanceMap[i][j] = 0;
+        } else {
+          distanceMap[i][j] = -1;
+        }
+      }
+    }
+  }
+  void ambulanceScheduling(vector<vector<Point_class> > &Ambulances, vector<patientInfo> &allPatients, vector<vector<int> > Hospotials) {
+    distMapInit(allPatients.size()+Hospotials.size());
+
+    for(int dim=0; dim<allPatients.size()+Hospotials.size(); dim++) {
+      distanceMap[dim][dim] = 0;
+    }
+
+    for(int ambu_idx=0; ambu_idx<Ambulances.size(); ambu_idx++) {
+      vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
+      vector<patientInfo> patientToPickUp = findPatientOnRoute(cur_Ambulance, allPatients, Hospotials);
+    }
+    cout<< allPatients.size()<<endl;
+
+
+  }
+
+};
+
+
+
+
 
 
 int main(int argc, char *argv[]){
@@ -225,6 +289,9 @@ int main(int argc, char *argv[]){
       ambulance_idx++;
     }
   }
+
+  Schedule scheduleClass;
+  scheduleClass.ambulanceScheduling(Ambulances, allPatients, Hospotials);
 
   for (int i=0; i<Ambulances.size(); i++) {
     int ambulance_idx = i+1;
