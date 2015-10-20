@@ -292,6 +292,7 @@ public:
   }
 
   bool noPatienWouldDie(int timeNow, int dist2H, vector<Point_class> cur_Ambulance) {
+    timeNow = findCurrentTime(cur_Ambulance);
     int idxOfPatientOnCar;
     for (idxOfPatientOnCar=cur_Ambulance.size()-1; idxOfPatientOnCar>0; idxOfPatientOnCar--) {
       if(cur_Ambulance[idxOfPatientOnCar].getIsHospital()) {break;}
@@ -299,7 +300,7 @@ public:
     idxOfPatientOnCar++;
 
     for (idxOfPatientOnCar=idxOfPatientOnCar; idxOfPatientOnCar<cur_Ambulance.size(); idxOfPatientOnCar++) {
-      if (cur_Ambulance[idxOfPatientOnCar].getRescutime() < timeNow+dist2H ){
+      if (cur_Ambulance[idxOfPatientOnCar].getRescutime() < timeNow+dist2H+2 ){
         return false;
       }
     }
