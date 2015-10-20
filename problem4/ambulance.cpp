@@ -59,9 +59,9 @@ class kMeans {
     }
     void printPairs(vector<pair<int, int> > pairs) {
       for(int i=0; i<pairs.size(); i++) {
-        printf("[%d, %d] ", pairs[i].first, pairs[i].second);
+        // printf("[%d, %d] ", pairs[i].first, pairs[i].second);
       }
-      printf("\n");
+      // printf("\n");
 
     }
     void updateCentPoints(vector<vector<patientInfo> > &Groups) {
@@ -74,7 +74,7 @@ class kMeans {
           totalX += Groups[i][member].xloc;
           totalY += Groups[i][member].yloc;
         }
-        printf("totalX: %d, totalY: %d, thisGroupSize: %d\n", totalX, totalY, thisGroupSize);
+        // printf("totalX: %d, totalY: %d, thisGroupSize: %d\n", totalX, totalY, thisGroupSize);
         cent_points[i].first = totalX/thisGroupSize;
         cent_points[i].second = totalY/thisGroupSize;
         // make_pair(totalX/thisGroupSize, totalY/thisGroupSize);
@@ -95,7 +95,7 @@ class kMeans {
         }
       }
       while( fabs(totalCloestDist_cur-totalCloestDist_prev)/totalCloestDist_prev > 0.01 ){
-        printf("------------------------------\n");
+        // printf("------------------------------\n");
         totalCloestDist_prev = totalCloestDist_cur==0 ? INT_MAX:totalCloestDist_cur;
         totalCloestDist_cur = 0;
         vector<vector<patientInfo> > Groups(numCluster);
@@ -108,18 +108,18 @@ class kMeans {
         }
 
         for(int i=0; i<Groups.size(); i++) {
-          printf("Group %d: %lu size\n", i, Groups[i].size());
+          // printf("Group %d: %lu size\n", i, Groups[i].size());
         }
 
-        printf("totalCloestDist_prev: %f\n", totalCloestDist_prev);
-        printf("totalCloestDist_cur: %f\n", totalCloestDist_cur);
-        cout<<float(fabs(totalCloestDist_cur-totalCloestDist_prev)/totalCloestDist_prev)<<endl;
+        // printf("totalCloestDist_prev: %f\n", totalCloestDist_prev);
+        // printf("totalCloestDist_cur: %f\n", totalCloestDist_cur);
+        // cout<<float(fabs(totalCloestDist_cur-totalCloestDist_prev)/totalCloestDist_prev)<<endl;
 
-        printf("cent_points before:\n");
-        printPairs(cent_points);
+        // printf("cent_points before:\n");
+        // printPairs(cent_points);
         updateCentPoints(Groups);
-        printf("cent_points after:\n");
-        printPairs(cent_points);
+        // printf("cent_points after:\n");
+        // printPairs(cent_points);
         finalGroups = Groups;
       }
 
@@ -189,9 +189,10 @@ public:
   }
   int findAvailableShortestPatient_idx(pair<int, int> curLoc, vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials, vector<Point_class> cur_Ambulance) {
     int shortestAvailablePatient_idx = -1;
+    int bestMinScore=INT_MAX; //the smaller the better
     int minDistAmbulanceToPatient=INT_MAX;
     for (int p_idx=0; p_idx<allPatients.size(); p_idx++) {
-      int dist_A_P, distPatientToCloestHostipal=INT_MAX;
+      int dist_A_P, distPatientToCloestHostipal=INT_MAX, minScore;
       pair<int, int> patientLoc = make_pair(allPatients[p_idx].xloc, allPatients[p_idx].yloc);
 
       Point_class myPoint(allPatients[p_idx].patientIdx, allPatients[p_idx].xloc,allPatients[p_idx].yloc, allPatients[p_idx].rescuetime, false);
@@ -199,6 +200,8 @@ public:
       testAmbulanceRout.push_back(myPoint);
 
       dist_A_P = getDist(curLoc, patientLoc);
+      // minScore = dist_A_P;
+      minScore = dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime));
 
       for (int hop_idx=0; hop_idx<Hospotials.size(); hop_idx++) {
         pair<int, int> hospotialLoc = make_pair(Hospotials[hop_idx][0],Hospotials[hop_idx][1]);
@@ -207,9 +210,10 @@ public:
           distPatientToCloestHostipal = dis_P_H;
         }
       }
-
-      if (noPatienWouldDie(findCurrentTime(testAmbulanceRout), distPatientToCloestHostipal, testAmbulanceRout) && minDistAmbulanceToPatient > dist_A_P) {
-        minDistAmbulanceToPatient = dist_A_P;
+      if (noPatienWouldDie(findCurrentTime(testAmbulanceRout), distPatientToCloestHostipal, testAmbulanceRout) && bestMinScore > minScore) {
+      // if (noPatienWouldDie(findCurrentTime(testAmbulanceRout), distPatientToCloestHostipal, testAmbulanceRout) && minDistAmbulanceToPatient > dist_A_P) {
+        bestMinScore = minScore;
+        // minDistAmbulanceToPatient = dist_A_P;
         shortestAvailablePatient_idx = p_idx;
       }
     }
@@ -317,6 +321,13 @@ public:
       cur_Ambulance[idx].updateRescuetime(cur_Ambulance[idx].getRescutime()-timeNow);
     }
   }
+  int numOfPatientOnCar(vector<Point_class> cur_Ambulance) {
+    int patientCount = 0;
+    for(int idx = cur_Ambulance.size()-1; !cur_Ambulance[idx].getIsHospital(); idx--) {
+      patientCount++;
+    }
+    return patientCount;
+  }
 
   void ambulanceScheduling(vector<vector<Point_class> > &Ambulances, vector<patientInfo> &allPatients, vector<vector<int> > Hospotials) {
     int noPatientCanSavedCount = 0;
@@ -326,7 +337,7 @@ public:
       for(int ambu_idx=0; ambu_idx<Ambulances.size(); ambu_idx++) {
         // printf("ambulance idex: %d\t", ambu_idx+1);
         vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
-        if (cur_Ambulance.size()==4) {
+        if (numOfPatientOnCar(cur_Ambulance)==4) {
           //meet max capacity. find cloest hospital
           // printf("Too many patient on car: %lu\n", cur_Ambulance.size());
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
@@ -355,7 +366,7 @@ public:
         allPatients.erase (allPatients.begin()+patient_idx);
       }
       // printAmbulance(Ambulances);
-      printf("----------------------------- %lu Patient Remained  -----------------------------\n", allPatients.size());
+      // printf("----------------------------- %lu Patient Remained  -----------------------------\n", allPatients.size());
     }
   }
 
