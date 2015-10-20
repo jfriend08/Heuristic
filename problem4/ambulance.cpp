@@ -160,6 +160,7 @@ public:
 class Schedule {
 private:
   map< pair<pair<int, int>, pair<int, int> >, int > distanceMap;
+  map< int, pair<pair<int, int>, pair<int, int> > > pheromone;
 public:
   int findCurrentTime(vector<Point_class> cur_Ambulance) {
     int totalTime=0, numH=0, numP=0;
@@ -187,12 +188,58 @@ public:
     }
     return dist;
   }
+  vector<vector<int> > initPheMap(){
+    vector<vector<int> > pheromoneMap(600, vector<int>(600));
+    for(int i=0; i<pheromoneMap.size(); i++) {
+      for(int j=0; j<pheromoneMap[i].size(); j++) {
+        pheromoneMap[i][j] = 0;
+      }
+    }
+    return pheromoneMap;
+  }
+  int getPheromoneAmount(pair<int, int> curLoc, pair<int, int> patientLoc, int timeNow) {
+    int totalPheromoneAmount = 0;
+    float midPointX = (curLoc.first+patientLoc.first)/2;
+    float xDev = abs(curLoc.first-patientLoc.first)/2;
+    float midPointY = (curLoc.second+patientLoc.second)/2;
+    float yDev = abs(curLoc.second-patientLoc.second)/2;
+    // vector<vector<int> > pheromoneMap = initPheMap();
+    for (int timePassed=0; timePassed<timeNow; timePassed++) {
+      if (pheromone.find(timePassed) != pheromone.end()) {
+        pair<pair<int, int>, pair<int, int> > locations = pheromone[timePassed];
+        pair<int, int> prevStartLoc = locations.first;
+        pair<int, int> prevEndLoc = locations.second;
+        int x1 = min(prevStartLoc.first, prevEndLoc.first);
+        int x2 = max(prevStartLoc.first, prevEndLoc.first);
+        int x3 = min(curLoc.first, patientLoc.first);
+        int x4 = max(curLoc.first, patientLoc.first);
+        int y1 = min(prevStartLoc.second, prevEndLoc.second);
+        int y2 = max(prevStartLoc.second, prevEndLoc.second);
+        int y3 = min(curLoc.second, patientLoc.second);
+        int y4 = max(curLoc.second, patientLoc.second);
+        int x5 = max(x1, x3);
+        int y5 = max(y1, y3);
+        int x6 = min(x2, x4);
+        int y6 = min(y2, y4);
+
+        bool degradedCheck = (x5 >= x6) & (y5 >= y6);
+        if (!degradedCheck) {
+          int area = (abs(x5-x6)+1)*(abs(y5-y6)+1);
+          totalPheromoneAmount -= area*1; //pheromone panelity
+        }
+      }
+    }
+    int myDesireArea = (abs(curLoc.first-patientLoc.first)+1)*(abs(curLoc.second-patientLoc.second)+1);
+    totalPheromoneAmount += myDesireArea*timeNow*1;
+    return totalPheromoneAmount;
+  }
   int findAvailableShortestPatient_idx(pair<int, int> curLoc, vector<patientInfo> allPatients, int timeNow, vector<vector<int> > Hospotials, vector<Point_class> cur_Ambulance) {
     int shortestAvailablePatient_idx = -1;
-    int bestMinScore=INT_MAX; //the smaller the better
+    float bestMinScore=FLT_MAX; //the smaller the better
     int minDistAmbulanceToPatient=INT_MAX;
     for (int p_idx=0; p_idx<allPatients.size(); p_idx++) {
-      int dist_A_P, distPatientToCloestHostipal=INT_MAX, minScore;
+      int dist_A_P, distPatientToCloestHostipal=INT_MAX;
+      float minScore;
       pair<int, int> patientLoc = make_pair(allPatients[p_idx].xloc, allPatients[p_idx].yloc);
 
       Point_class myPoint(allPatients[p_idx].patientIdx, allPatients[p_idx].xloc,allPatients[p_idx].yloc, allPatients[p_idx].rescuetime, false);
@@ -200,8 +247,15 @@ public:
       testAmbulanceRout.push_back(myPoint);
 
       dist_A_P = getDist(curLoc, patientLoc);
+      int pheromoneAmountToHere = getPheromoneAmount(curLoc, patientLoc, timeNow);
       // minScore = dist_A_P;
       minScore = dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime));
+      // minScore = dist_A_P/log10(sqrt(allPatients[p_idx].rescuetime));
+      // printf("original minScore:%f\n",minScore);
+      minScore = (dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime)))*pow(0.999999,pheromoneAmountToHere);
+      // minScore = pow(0.999,pheromoneAmountToHere);
+      // printf("pheromone:%d\tdist_A_P:%d\trescuetime:%d\tminScore:%f\n", pheromoneAmountToHere, dist_A_P, allPatients[p_idx].rescuetime, minScore);
+      // minScore = 1/log2(pheromoneAmountToHere);
 
       for (int hop_idx=0; hop_idx<Hospotials.size(); hop_idx++) {
         pair<int, int> hospotialLoc = make_pair(Hospotials[hop_idx][0],Hospotials[hop_idx][1]);
@@ -220,6 +274,9 @@ public:
     return shortestAvailablePatient_idx;
 
   }
+  void updatePheromone(pair<int, int> AmbulanceLoc, pair<int, int> PatientLoction, int timeNow) {
+    pheromone[timeNow] = make_pair(AmbulanceLoc, PatientLoction);
+  }
   int findPatientOnRoute(vector<Point_class> cur_Ambulance, vector<patientInfo> allPatients, vector<vector<int> > Hospotials) {
     int timeNow = findCurrentTime(cur_Ambulance);
     // cout<<"timeNow: "<<timeNow<<endl;
@@ -227,6 +284,9 @@ public:
     int curY = cur_Ambulance[cur_Ambulance.size()-1].getY();
     // cout<<"findPatientOnRoute. allPatients.size(): "<< allPatients.size()<<endl;
     int patient_idx = findAvailableShortestPatient_idx(make_pair(curX, curY), allPatients, timeNow, Hospotials, cur_Ambulance);
+    if (patient_idx != 1) {
+      updatePheromone(make_pair(curX,curY), make_pair(allPatients[patient_idx].xloc, allPatients[patient_idx].yloc), timeNow);
+    }
     // printf("my location: [%d,%d]\tShortest Patient Location: [%d,%d,%d]\n", curX, curY, allPatients[patient_idx].xloc, allPatients[patient_idx].yloc, allPatients[patient_idx].rescuetime);
     return patient_idx;
   }
