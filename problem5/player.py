@@ -23,8 +23,8 @@ class Player(Client):
     self.oppIdx = idx ^ 1
     self.board = np.zeros([1000, 1000], dtype=np.uint8)
     self.board.fill(-1)
-    self.moveNum = 0
-    self.moves = 0
+    self.myMoves = 0
+    self.oppMoves = 0
 
     '''
     Return tuple of player scores, first element is our score, second one is opponent's
@@ -54,12 +54,7 @@ class Player(Client):
 
   def makeMove(self):
     move = self.make_random_move()
-    '''
-    self.updatePoints(self.playerIdx, move[0], move[1])
-    genVoronoi.generate_voronoi_diagram(2, self.numMoves, self.points, self.colors, None, 0, 0)
-    print 'Current score: {0}'.format(self.get_score())
-    '''
-    self.updatePoints(self.playerIdx, move[0], move[1])
+    self.updatePoints(self.playerIdx, self.myMoves, move[0], move[1])
     genVoronoi.generate_voronoi_diagram(2, self.numMoves, self.points, self.colors, None, 0, 0)
     print 'Current score: {0}'.format(self.get_score())
 
@@ -69,16 +64,12 @@ class Player(Client):
     Client.reset(self)
     self.points.fill(-1)
     self.board.fill(-1)
-    self.moveNum = 0
-    self.moves = 0
+    self.myMoves = 0
+    self.oppMoves = 0
 
-  def updateMoveNum(self):
-    if self.moves % 2 == 0:
-      self.moveNum += 1
-
-  def updatePoints(self, player, x, y):
-    self.points[player][self.moveNum][0] = x
-    self.points[player][self.moveNum][1] = y
+  def updatePoints(self, player, move, x, y):
+    self.points[player][move][0] = x
+    self.points[player][move][1] = y
     self.board[x][y] = player
 
   def dataReceived(self, data):
@@ -95,15 +86,13 @@ class Player(Client):
       for item in items[:-1]:
         parts = item.split()
         x, y = int(parts[1]), int(parts[2])
-        self.updatePoints(self.oppIdx, x, y)
-        self.moves += 1
+        self.updatePoints(self.oppIdx, self.oppMoves, x, y)
+        self.oppMoves += 1 #TODO: Need to update of want to play multiplayer games
 
-      self.updateMoveNum()
       move = self.makeMove()
       print 'Player {0} making move: {1}'.format(self.name, move)
       self.transport.write('{0} {1}'.format(move[0], move[1]))
-      self.moves += 1
-      self.updateMoveNum()
+      self.myMoves += 1
 
 class PlayerFactory(ClientFactory):
   def __init__(self, name, idx, numMoves):
