@@ -1,6 +1,7 @@
 import argparse
 import random
 import numpy as np
+import datetime
 
 from twisted.internet import reactor, protocol
 
@@ -21,10 +22,17 @@ class Player(Client):
     self.colors = np.zeros([2, 3], dtype=np.uint8) #Dummy data to run score script
     self.playerIdx = idx
     self.oppIdx = idx ^ 1
-    self.board = np.zeros([1000, 1000], dtype=np.uint8)
+    # self.board = np.zeros([1000, 1000], dtype=np.uint8)
+    self.board = np.zeros([1000, 1000])
     self.board.fill(-1)
     self.myMoves = 0
     self.oppMoves = 0
+
+    self.max_time = datetime.timedelta(seconds=1)
+    self.C = 1.4
+    self.wins = {0: {}, 1: {}}
+    self.plays = {1: {}, 1: {}}
+    self.states = []
 
     '''
     Return tuple of player scores, first element is our score, second one is opponent's
@@ -52,8 +60,27 @@ class Player(Client):
   def validMove(self, x, y):
     return self.board[x][y] == -1
 
+  def legal_plays(self):
+    return np.where(self.board == -1)
+
   def makeMove(self):
+
+    legal = self.legal_plays()
+    states = [((legal[0][i], legal[1][i]), self.states) for i in xrange(len(legal[0]))]
+
+    # print legal
+    begin, games = datetime.datetime.utcnow(), 0
+    '''Start MonteCarlo method'''
+    while datetime.datetime.utcnow() - begin < self.max_time:
+      # self.random_game()
+      games += 1
+    print games, datetime.datetime.utcnow() - begin
+
+    # move = max(
+    #   (self.wins[player].get(S,0) / self.plays[player].get(S,1), p)
+    #   for p, S in states)[1]
     move = self.make_random_move()
+
     self.updatePoints(self.playerIdx, self.myMoves, move[0], move[1])
     genVoronoi.generate_voronoi_diagram(2, self.numMoves, self.points, self.colors, None, 0, 0)
     print 'Current score: {0}'.format(self.get_score())
@@ -71,6 +98,7 @@ class Player(Client):
     self.points[player][move][0] = x
     self.points[player][move][1] = y
     self.board[x][y] = player
+    self.states.append(player)
 
   def dataReceived(self, data):
     print 'Player {0} Received: {1}'.format(self.name, data)
