@@ -1,5 +1,6 @@
 import argparse
 import random
+import sys
 import numpy as np
 import datetime
 
@@ -67,112 +68,94 @@ class Player(Client):
     return np.where(board == -1)
 
   def makeMove(self):
-    self.states.append(self.playerIdx)
-    legal = self.legal_plays(self.board) #all legal moves
-    # states = [( (self.states, legal[0][i], legal[1][i]) ) for i in xrange(len(legal[0]))]
-    states = [((legal[0][i], legal[1][i]), tuple(self.states)) for i in xrange(len(legal[0]))]
-    print "self.states", self.states
-    # print states
-    begin, games = datetime.datetime.utcnow(), 0
-    '''Start MonteCarlo method'''
-    while datetime.datetime.utcnow() - begin < self.max_time:
-      self.random_game()
-      games += 1
-    print "#random_game", games, datetime.datetime.utcnow() - begin
 
-    print self.wins[self.playerIdx].get(tuple(self.states))
-
-    move = max(
-      (self.wins[self.playerIdx].get(S,0) / self.plays[self.playerIdx].get(S,1), p)
-      for p, S in states)[1]
-    # move = max(
-    #   (self.wins[self.playerIdx].get(S,0) / self.plays[self.playerIdx].get(S,1), (x,y))
-    #   for (S,x,y) in states)[1]
     # move = self.make_random_move()
+    print "before thinkNextMove", self.myMoves
+    if self.myMoves < self.numMoves:
+      move = self.thinkNextMove(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    elif self.myMoves < self.numMoves and self.playerIdx != 1:
+      move = self.findBestLastOne(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    else:
+      move = self.findBestLastOne(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
 
+    print "makeMove", move
     self.updatePoints(self.playerIdx, self.myMoves, move[0], move[1])
     genVoronoi.generate_voronoi_diagram(2, self.numMoves, self.points, self.colors, None, 0, 0)
     print 'Current score: {0}'.format(self.get_score())
 
     return move
-  def random_game(self):
-    game_moves = {0: set(), 1: set()}
-    new_states = []
-    new_states.append(self.states[:])
-    expand = True
-    # max_moves = 2*(self.numMoves-max(myMoves, myOppMoves))
 
-    myBoard = np.copy(self.board)
-    myPoints = np.copy(self.points)
-    myMoves = copy.copy(self.myMoves)
-    myOppMoves = copy.copy(self.oppMoves)
-    max_moves = min(self.numMoves-max(myMoves, myOppMoves), 4)
-    for t in xrange(max_moves):
-      state = new_states[-1]
-      player = state[-1]
-      legal = self.legal_plays(myBoard)
-      states = [((legal[0][i], legal[1][i]), tuple(state)) for i in xrange(len(legal[0]))]
+  def findBestLastOne(self, board, deep, deepSet, points, Moves, OppMoves):
+    legalMoves = self.legal_plays(board)
+    randIdx = np.random.choice(len(legalMoves[0]), 100)
+    tmp = []
+    for idx in randIdx:
+      tmp.append((legalMoves[0][idx], legalMoves[1][idx]))
+    legalMoves = tmp
 
-      plays, wins = self.plays[player], self.wins[player] #they are hash invidually
-      if all(plays.get(S) for p, S in states): ## state in plays
-        log_total = log(sum(plays[S] for p, S in states))
-        move, state = max(((wins[S] / plays[S]) + self.C * sqrt(log_total / plays[S]), p, S) for p, S in states)[1:]
-      else:
-        move, state = choice(states)
+    score = -sys.maxint - 1
+    bestMove = ()
+    for eachMove in legalMoves:
+      points[self.playerIdx][Moves][0] = eachMove[0]
+      points[self.playerIdx][Moves][1] = eachMove[1]
+      genVoronoi.generate_voronoi_diagram(2, Moves, points, self.colors, None, 0, 0)
+      scores = genVoronoi.get_scores(2)
+      myScore = scores[self.playerIdx]
+      if score < myScore:
+        score = myScore
+        bestMove = eachMove
+    return bestMove
 
-      if player == self.playerIdx:
-        new_states.append(state + (self.oppIdx,))
-      else:
-        new_states.append(state + (self.playerIdx,))
-
-      myBoard[move[0]][move[1]] = player
-
-      if(player==self.playerIdx):
-        # print "myMoves", myMoves
-        myPoints[player][myMoves][0] = move[0]
-        myPoints[player][myMoves][1] = move[1]
-        myMoves += 1
-      else:
-        # print "myOppMoves", myOppMoves
-        myPoints[player][myOppMoves][0] = move[0]
-        myPoints[player][myOppMoves][1] = move[1]
-        myOppMoves += 1
-
-      if expand and state not in plays: ## expand==TRUE && state not in plays
-        expand = False
-        plays[state] = 0
-        wins[state] = 0
-
-      game_moves[player].add(state)
-      winner = self.winner(myMoves, myOppMoves, myPoints)
-      if winner:
-        break
-
-    for player, M in game_moves.iteritems():
-      for S in M:
-        if S in self.plays[player]:
-          self.plays[player][S] += 1
-
-    if winner in (0, 1):
-      for S in game_moves[winner]:
-        if S in self.plays[winner]:
-          self.wins[winner][S] += 1
-
-  def winner(self, myMoves, myOppMoves, myPoints):
-    # print "winner", myMoves, myOppMoves
-    if myMoves == myOppMoves and myOppMoves == self.numMoves-1:
-      genVoronoi.generate_voronoi_diagram(2, myMoves, myPoints, self.colors, None, 0, 0)
+  def thinkNextMove(self, board, deep, deepSet, points, Moves, OppMoves):
+    if Moves==0 and OppMoves ==0:
+      return (500,500)
+    if deep > deepSet:
+      genVoronoi.generate_voronoi_diagram(2, Moves, points, self.colors, None, 0, 0)
       scores = genVoronoi.get_scores(2)
       myScore = scores[self.playerIdx]
       oppScore = scores[self.oppIdx]
-      print "myScore", myScore
-      if myScore >= oppScore:
-        return self.playerIdx
-      else:
-        return self.oppIdx
-    else:
-      return 0
+      return myScore
 
+    legalMoves = self.legal_plays(board)
+    if deep%2 == 1:
+      randSampling = 5
+    else:
+      randSampling = 100
+    randIdx = np.random.choice(len(legalMoves[0]), randSampling)
+    tmp = []
+    for idx in randIdx:
+      tmp.append((legalMoves[0][idx], legalMoves[1][idx]))
+    legalMoves = tmp
+
+    score = -sys.maxint - 1
+    bestMove = ()
+    for eachMove in legalMoves:
+      # print deep, eachMove
+      myBoard = np.copy(board)
+      myPoints = np.copy(points)
+      myMoves = copy.copy(Moves)
+      myOppMoves = copy.copy(OppMoves)
+      if deep%2 == 1: # it's me
+        myPoints[self.playerIdx][myMoves][0] = eachMove[0]
+        myPoints[self.playerIdx][myMoves][1] = eachMove[1]
+        tmp_val = self.thinkNextMove(board, deep+1, deepSet, myPoints, myMoves+1, myOppMoves)
+        board[eachMove[0]][eachMove[1]] = self.playerIdx
+      else:
+        myPoints[self.oppIdx][myOppMoves][0] = eachMove[0]
+        myPoints[self.oppIdx][myOppMoves][1] = eachMove[1]
+        tmp_val = self.thinkNextMove(board, deep+1, deepSet, myPoints, myMoves, myOppMoves+1)
+        board[eachMove[0]][eachMove[1]] = self.oppIdx
+
+      # tmp_val = self.thinkNextMove(board, deep, deepSet, myPoints, myMoves, myOppMoves)
+      if not isinstance(tmp_val, tuple) and tmp_val > score:
+        score = tmp_val
+        bestMove = eachMove
+    print "result in thinkNextMove"
+    print score, bestMove, self.myMoves, deep
+    if deep == 2:
+      return score
+    else:
+      return bestMove
   def reset(self):
     Client.reset(self)
     self.points.fill(-1)
