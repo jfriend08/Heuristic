@@ -3,6 +3,9 @@ import random
 import numpy as np
 import datetime
 
+import copy
+from random import random, choice
+
 from twisted.internet import reactor, protocol
 
 import genVoronoi
@@ -31,7 +34,7 @@ class Player(Client):
     self.max_time = datetime.timedelta(seconds=1)
     self.C = 1.4
     self.wins = {0: {}, 1: {}}
-    self.plays = {1: {}, 1: {}}
+    self.plays = {0: {}, 1: {}}
     self.states = []
 
     '''
@@ -60,32 +63,105 @@ class Player(Client):
   def validMove(self, x, y):
     return self.board[x][y] == -1
 
-  def legal_plays(self):
-    return np.where(self.board == -1)
+  def legal_plays(self, board):
+    return np.where(board == -1)
 
   def makeMove(self):
-
-    legal = self.legal_plays()
-    states = [((legal[0][i], legal[1][i]), self.states) for i in xrange(len(legal[0]))]
-
+    self.states.append(self.playerIdx)
+    legal = self.legal_plays(self.board)
+    states = [((legal[0][i], legal[1][i]), tuple(self.states)) for i in xrange(len(legal[0]))]
+    print "self.states", self.states
     # print legal
     begin, games = datetime.datetime.utcnow(), 0
     '''Start MonteCarlo method'''
     while datetime.datetime.utcnow() - begin < self.max_time:
-      # self.random_game()
+      self.random_game()
       games += 1
-    print games, datetime.datetime.utcnow() - begin
+    print "#random_game", games, datetime.datetime.utcnow() - begin
 
-    # move = max(
-    #   (self.wins[player].get(S,0) / self.plays[player].get(S,1), p)
-    #   for p, S in states)[1]
-    move = self.make_random_move()
+    move = max(
+      (self.wins[self.playerIdx].get(S,0) / self.plays[self.playerIdx].get(S,1), p)
+      for p, S in states)[1]
+    # move = self.make_random_move()
 
     self.updatePoints(self.playerIdx, self.myMoves, move[0], move[1])
     genVoronoi.generate_voronoi_diagram(2, self.numMoves, self.points, self.colors, None, 0, 0)
     print 'Current score: {0}'.format(self.get_score())
 
     return move
+  def random_game(self):
+    game_moves = {0: set(), 1: set()}
+    new_states = []
+    new_states.append(self.states[:])
+    expand = True
+    max_moves = 100
+
+    myBoard = np.copy(self.board)
+    myPoints = np.copy(self.points)
+    myMoves = copy.copy(self.myMoves)
+    myOppMoves = copy.copy(self.oppMoves)
+
+    for t in xrange(self.numMoves-max(myMoves, myOppMoves)):
+      state = new_states[-1]
+      player = state[-1]
+      legal = self.legal_plays(myBoard)
+      # print "state", state
+      states = [((legal[0][i], legal[1][i]), tuple(state)) for i in xrange(len(legal[0]))]
+
+      plays, wins = self.plays[player], self.wins[player] #they are hash invidually
+      # print "plays", plays, type(plays)
+      # print "wins", wins, type(wins)
+      if all(plays.get(S) for p, S in states): ## state in plays
+        log_total = log(sum(plays[S] for p, S in states))
+        move, state = max(((wins[S] / plays[S]) + self.C * sqrt(log_total / plays[S]), p, S) for p, S in states)[1:]
+      else:
+        move, state = choice(states)
+
+      new_states.append(state)
+      myBoard[move[0]][move[1]] = player
+      if(player==self.playerIdx):
+        print "myMoves", myMoves
+        myPoints[player][myMoves][0] = move[0]
+        myPoints[player][myMoves][1] = move[1]
+        myMoves += 1
+      else:
+        print "myOppMoves", myOppMoves
+        myPoints[player][myOppMoves][0] = move[0]
+        myPoints[player][myOppMoves][1] = move[1]
+        myOppMoves += 1
+
+      if expand and state not in plays: ## expand==TRUE && state not in plays
+        expand = False
+        plays[state] = 0
+        wins[state] = 0
+
+      game_moves[player].add(state)
+      winner = self.winner(myMoves, myOppMoves, myPoints)
+      if winner:
+        break
+
+    for player, M in game_moves.iteritems():
+      for S in M:
+        if S in self.plays[player]:
+          self.plays[player][S] += 1
+
+    if winner in (1, 2):
+      for S in game_moves[winner]:
+        if S in self.plays[winner]:
+          self.wins[winner][S] += 1
+
+  def winner(self, myMoves, myOppMoves, myPoints):
+    if myMoves == myOppMoves and myOppMoves == self.numMoves:
+      genVoronoi.generate_voronoi_diagram(2, myMoves, myPoints, self.colors, None, 0, 0)
+      scores = genVoronoi.get_scores(2)
+      myScore = scores[self.playerIdx]
+      oppScore = scores[self.oppIdx]
+      if myScore >= oppScore:
+        return self.playerIdx
+      else:
+        return self.oppIdx
+    else:
+      return 0
 
   def reset(self):
     Client.reset(self)
@@ -98,7 +174,7 @@ class Player(Client):
     self.points[player][move][0] = x
     self.points[player][move][1] = y
     self.board[x][y] = player
-    self.states.append(player)
+    # self.states.append(player)
 
   def dataReceived(self, data):
     print 'Player {0} Received: {1}'.format(self.name, data)
@@ -115,6 +191,7 @@ class Player(Client):
         parts = item.split()
         x, y = int(parts[1]), int(parts[2])
         self.updatePoints(self.oppIdx, self.oppMoves, x, y)
+        self.states.append(self.oppIdx)
         self.oppMoves += 1 #TODO: Need to update of want to play multiplayer games
 
       move = self.makeMove()
