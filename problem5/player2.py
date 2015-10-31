@@ -21,7 +21,7 @@ class Player(Client):
     Client.__init__(self, name)
     self.numMoves = numMoves
     genVoronoi.init_cache()
-    self.points = np.zeros([2, numMoves, 2], dtype=np.int)
+    self.points = np.zeros([2, numMoves+1, 2], dtype=np.int)
     self.points.fill(-1)
     self.colors = np.zeros([2, 3], dtype=np.uint8) #Dummy data to run score script
     self.playerIdx = idx
@@ -71,12 +71,14 @@ class Player(Client):
 
     # move = self.make_random_move()
     print "before thinkNextMove", self.myMoves
-    if self.myMoves < self.numMoves:
-      move = self.thinkNextMove(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
-    elif self.myMoves < self.numMoves and self.playerIdx != 1:
-      move = self.findBestLastOne(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
-    else:
-      move = self.findBestLastOne(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    move = self.thinkNextMove(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    # if self.myMoves < self.numMoves-1:
+    #   move = self.thinkNextMove(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    # elif self.myMoves < self.numMoves-1 and self.playerIdx == 0:
+    #   move = self.thinkNextMove(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    #   # move = self.findBestLastOne(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
+    # else:
+    #   move = self.findBestLastOne(self.board, 1, 2, self.points, self.myMoves, self.oppMoves)
 
     print "makeMove", move
     self.updatePoints(self.playerIdx, self.myMoves, move[0], move[1])
@@ -96,14 +98,17 @@ class Player(Client):
     score = -sys.maxint - 1
     bestMove = ()
     for eachMove in legalMoves:
-      points[self.playerIdx][Moves][0] = eachMove[0]
-      points[self.playerIdx][Moves][1] = eachMove[1]
-      genVoronoi.generate_voronoi_diagram(2, Moves, points, self.colors, None, 0, 0)
+      points[self.playerIdx][Moves+1][0] = eachMove[0]
+      points[self.playerIdx][Moves+1][1] = eachMove[1]
+      genVoronoi.generate_voronoi_diagram(2, Moves+1, points, self.colors, None, 0, 0)
       scores = genVoronoi.get_scores(2)
       myScore = scores[self.playerIdx]
+      print "myScore", myScore, eachMove
       if score < myScore:
         score = myScore
         bestMove = eachMove
+      points[self.playerIdx][Moves+1][0] = -1
+      points[self.playerIdx][Moves+1][1] = -1
     return bestMove
 
   def thinkNextMove(self, board, deep, deepSet, points, Moves, OppMoves):
@@ -118,9 +123,9 @@ class Player(Client):
 
     legalMoves = self.legal_plays(board)
     if deep%2 == 1:
-      randSampling = 5
+      randSampling = 10
     else:
-      randSampling = 100
+      randSampling = 10
     randIdx = np.random.choice(len(legalMoves[0]), randSampling)
     tmp = []
     for idx in randIdx:

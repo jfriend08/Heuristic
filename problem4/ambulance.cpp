@@ -4,7 +4,7 @@
 #include <map>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits>
+#include <limits.h>
 #include <queue>
 #include <math.h>
 #include <float.h>
@@ -249,13 +249,9 @@ public:
       dist_A_P = getDist(curLoc, patientLoc);
       int pheromoneAmountToHere = getPheromoneAmount(curLoc, patientLoc, timeNow);
       // minScore = dist_A_P;
-      minScore = dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime));
-      // minScore = dist_A_P/log10(sqrt(allPatients[p_idx].rescuetime));
-      // printf("original minScore:%f\n",minScore);
+      // minScore = dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime));
       minScore = (dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime)))*pow(0.999999,pheromoneAmountToHere);
-      // minScore = pow(0.999,pheromoneAmountToHere);
-      // printf("pheromone:%d\tdist_A_P:%d\trescuetime:%d\tminScore:%f\n", pheromoneAmountToHere, dist_A_P, allPatients[p_idx].rescuetime, minScore);
-      // minScore = 1/log2(pheromoneAmountToHere);
+      // minScore = dist_A_P/log2(sqrt(allPatients[p_idx].rescuetime));
 
       for (int hop_idx=0; hop_idx<Hospotials.size(); hop_idx++) {
         pair<int, int> hospotialLoc = make_pair(Hospotials[hop_idx][0],Hospotials[hop_idx][1]);
@@ -389,6 +385,73 @@ public:
     }
     return patientCount;
   }
+  vector<Point_class> routOptimize(vector<Point_class> cur_Ambulance, vector<vector<int> >) {
+    vector<Point_class> test_Ambulance = cur_Ambulance;
+    vector<Point_class> patientsVector;
+    vector<Point_class> BestPatientsVector;
+
+    int lastIdx = test_Ambulance.size()-1; //the idex of the last point which is hospital
+    int firstIdx = lastIdx; //index of previous hoptial
+    int shorTestDist=INT_MAX;
+
+    Point_class lastHospital = test_Ambulance[lastIdx];
+
+    if (test_Ambulance[lastIdx].getIsHospital()) {
+      lastHospital = test_Ambulance[lastIdx];
+      firstIdx = lastIdx-1;
+      while(!test_Ambulance[firstIdx].getIsHospital()) {
+        firstIdx--;
+      }
+    }
+
+    if (firstIdx+1 != lastIdx) {
+      for(int i=firstIdx+1; i<lastIdx; i++) {
+        patientsVector.push_back(test_Ambulance[i]);
+      }
+      test_Ambulance.erase(test_Ambulance.begin()+firstIdx+1,test_Ambulance.end());
+
+      int timeNow = findCurrentTime(test_Ambulance);
+      pair<int, int> curLoc = make_pair(test_Ambulance[test_Ambulance.size()-1].getX(), test_Ambulance[test_Ambulance.size()-1].getY());
+
+      int array_idx [patientsVector.size()];
+      for (int k=0; k<patientsVector.size(); k++) {
+        array_idx[k] =k;
+      }
+      do {
+        // int cur_Dist=0;
+        int cur_Dist = getDist(curLoc, make_pair(patientsVector[array_idx[0]].getX(), patientsVector[array_idx[0]].getY()));
+        for(int myIdx=0; myIdx<patientsVector.size()-1; myIdx++) {
+          cur_Dist+=getDist(make_pair(patientsVector[array_idx[myIdx]].getX(), patientsVector[array_idx[myIdx]].getY()), make_pair(patientsVector[array_idx[myIdx+1]].getX(), patientsVector[array_idx[myIdx+1]].getY()) );
+        }
+        // printf("cur_Dist: %d\n", cur_Dist);
+        if (shorTestDist>cur_Dist) {
+          shorTestDist=cur_Dist;
+          vector<Point_class> tmpPatientBVector;
+          for(int myIdx=0; myIdx<patientsVector.size(); myIdx++) {
+            tmpPatientBVector.push_back(patientsVector[array_idx[myIdx]]);
+          }
+          BestPatientsVector=tmpPatientBVector;
+        }
+        //TODO: choose best hospital
+      } while ( std::next_permutation(array_idx,array_idx+patientsVector.size()) );
+
+      for(int i=0; i<BestPatientsVector.size(); i++) {
+        test_Ambulance.push_back(BestPatientsVector[i]);
+      }
+      test_Ambulance.push_back(lastHospital);
+      // printf("Inside\n");
+      // for(int i=test_Ambulance.size()-3; i<test_Ambulance.size(); i++){
+      //   printf("[%d,%d] ", test_Ambulance[i].getX(), test_Ambulance[i].getY());
+      // }
+      // printf("\n");
+      return test_Ambulance;
+    } else {
+      return cur_Ambulance;
+    }
+    // printf("firstIdx:%d\tlastIdx:%d\n", firstIdx, lastIdx);
+
+    return cur_Ambulance;
+  }
 
   void ambulanceScheduling(vector<vector<Point_class> > &Ambulances, vector<patientInfo> &allPatients, vector<vector<int> > Hospotials) {
     int noPatientCanSavedCount = 0;
@@ -400,10 +463,11 @@ public:
         vector<Point_class> cur_Ambulance = Ambulances[ambu_idx];
         if (numOfPatientOnCar(cur_Ambulance)==4) {
           //meet max capacity. find cloest hospital
-          // printf("Too many patient on car: %lu\n", cur_Ambulance.size());
+          // printf("reach 4 ppl\tambu_idx: %d\n", ambu_idx+1);
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
           Ambulances[ambu_idx].push_back(myPoint);
+          Ambulances[ambu_idx] = routOptimize(Ambulances[ambu_idx], Hospotials);
           patientTimeToLiveUpdate(Ambulances[ambu_idx]);
           // printf("after findHosptialOfCurrentRout: %lu\n", cur_Ambulance.size());
           continue;
@@ -414,10 +478,12 @@ public:
         if (patient_idx==-1) {
           //no available patient for this ambulance. find cloest hospital
           // printf("Need to return hospital\n");
+          // printf("Need return\tambu_idx: %d\n", ambu_idx+1);
           noPatientCanSavedCount++;
           int hotel_idx = findHosptialOfCurrentRout(cur_Ambulance, Hospotials);
           Point_class myPoint(Hospotials[hotel_idx][0], Hospotials[hotel_idx][1], true); //init a point
           Ambulances[ambu_idx].push_back(myPoint);
+          Ambulances[ambu_idx] = routOptimize(Ambulances[ambu_idx], Hospotials);
           patientTimeToLiveUpdate(Ambulances[ambu_idx]);
           continue;
         }
