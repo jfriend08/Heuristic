@@ -22,12 +22,26 @@ class Prey(object):
     self.hunterPos = result["hunter"]
     print "self.preyPos", self.preyPos
 
+  def addMove(self, direction):
+    socketP.send(json.dumps({"command":"M", "direction": direction}))
+
+  def recvPublisher(self):
+    result = json.loads(mainSocket.recv())
+    print "recvPublisher", result
+
 
 def main():
   myPrey = Prey()
+
   stepCount = 1
-  while(stepCount<100):
-    myPrey.checkPosition()
+  while(stepCount < 10):
+    if stepCount%2 == 1:
+      socketH.send(json.dumps({"command":"M", "direction": "S"}))
+      myPrey.recvPublisher()
+    elif stepCount%2 == 0:
+      myPrey.addMove("NE")
+      myPrey.checkPosition()
+
     stepCount += 1
 
 
