@@ -1,19 +1,19 @@
 from websocket import create_connection
 import json, numpy
 
-mainSocket = create_connection('ws://localhost:1990');
-socketH = create_connection('ws://localhost:1991');
-socketP = create_connection('ws://localhost:1992');
+mainSocket = create_connection('ws://localhost:1990')
+socketH = create_connection('ws://localhost:1991')
+socketP = create_connection('ws://localhost:1992')
 
 
 class Prey(object):
   def __init__(self):
-    self.preyPos = [230, 200];
-    self.hunterPos = [0, 0];
-    self.hunterDirection = None;
-    self.wallString = "";
-    self.walls = [];
-    self.publisherMsg = False;
+    self.preyPos = [230, 200]
+    self.hunterPos = [0, 0]
+    self.hunterDirection = None
+    self.wallString = ""
+    self.walls = []
+    self.publisherMsg = False
     self.allDirs = {"0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
     self.Dir2Coordinate = {"N":(0.-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
     self.getOppDir = {"S":"N", "N":"S", "W":"E", "E":"W", "WS":"NE", "SE":"NW", "NW":"SE", "NE":"SW"}
@@ -94,12 +94,18 @@ class Prey(object):
     else:
       return 1
 
-  def checkWalls(self):
-    return None
+  def getFarAndSeeIfThereIsAWall(self, idealDir):
+    nextPosition = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
+    return idealDir
+
 
   def decideMove(self):
-    print "preyAtBack", self.preyAtBack()
-    return self.getOppDir[self.hunterDirection]
+    atBack = self.preyAtBack()
+    idealDir = self.getOppDir[self.hunterDirection]
+    idealDir = self.getFarAndSeeIfThereIsAWall(idealDir)
+    print "preyAtBack", atBack
+    print "idealDir", idealDir
+    return idealDir
 
 def main():
   myPrey = Prey()
@@ -114,7 +120,6 @@ def main():
     elif stepCount%2 == 0:
       # #check states
       # myPrey.checkPosition()
-      # myPrey.checkWalls()
 
       #prey decide moves, and make move
       nextMove = myPrey.decideMove()
