@@ -1,6 +1,7 @@
 from websocket import create_connection
 import json, numpy
 from  scipy.spatial.distance import euclidean
+from random import randint
 
 mainSocket = create_connection('ws://localhost:1990')
 socketH = create_connection('ws://localhost:1991')
@@ -138,11 +139,23 @@ class Prey(object):
     #     print "hit the wall"
 
   def checkNotGetCaughtByHunter(self, idealDir):
-    nextPosition = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
-    dist = euclidean(nextPosition, self.hunterPos)
-    print "nextPosition", nextPosition
-    print "self.hunterPos", self.hunterPos
-    print "dist", dist
+    # TODO: should be more determine to decide new_idealDir semi-opposit to self.hunterDirection, instead just rand
+    nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
+    nextPosition_hunter = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[self.hunterDirection])
+    dist = euclidean(nextPosition_prey, nextPosition_hunter)
+
+    considerCount = 0
+    while dist <= 6 and considerCount<15:
+      dirIdx = randint(0,len(self.allDirs.keys()));
+      new_idealDir = self.allDirs[self.allDirs.keys()[dirIdx]]
+      nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[new_idealDir])
+      dist = euclidean(nextPosition_prey, nextPosition_hunter)
+      idealDir = new_idealDir
+      print "may get caught new_idealDir", new_idealDir
+      print "may get caught idealDir", idealDir
+      considerCount += 1
+
+    return idealDir
 
   def decideMove(self):
     atBack = self.preyAtBack()
