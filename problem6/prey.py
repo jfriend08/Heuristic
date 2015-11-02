@@ -17,6 +17,35 @@ class Prey(object):
     self.allDirs = {"0_0":"X", "0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
     self.Dir2Coordinate = {"X":(0,0), "N":(0,-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
     self.getOppDir = {"X":"X", "S":"N", "N":"S", "W":"E", "E":"W", "WS":"NE", "SE":"NW", "NW":"SE", "NE":"SW"}
+    self.wallBoundary = self.setWallBoundary()
+
+  def setWallBoundary(self):
+    EastBound = set()
+    SouthBound = set()
+    NorthBound = set()
+    WestBound = set()
+
+    eastDir = numpy.array([1,0])
+    southDir = numpy.array([0,1])
+    northDir = numpy.array([0,-1])
+    westDir = numpy.array([-1,0])
+
+    startP1 = numpy.array([-1,-1])
+    startP2 = numpy.array([301,301])
+
+    for i in range(303):
+      new_E_Point = startP1 + eastDir*i
+      EastBound.add(tuple(new_E_Point))
+      new_S_Point = startP1 + southDir*i
+      SouthBound.add(tuple(new_S_Point))
+      new_N_Point = startP2 + northDir*i
+      NorthBound.add(tuple(new_N_Point))
+      new_W_Point = startP2 + westDir*i
+      WestBound.add(tuple(new_W_Point))
+    return [(eastDir,EastBound), (southDir,SouthBound), (northDir,NorthBound), (westDir,WestBound)]
+
+  def printBoundary(self):
+    print self.wallBoundary
 
   def checkPosition(self):
     data = {"command":"P"}
@@ -63,16 +92,13 @@ class Prey(object):
       length = eachWall["length"]
       startPos = numpy.array(eachWall["position"])
       aWallDirection = self.getWallDirection(eachWall["direction"])
-      # if isinstance(eachWall["direction"], list):
-      #   direction = numpy.array(eachWall["direction"])
-      # else:
-      #   direction = numpy.array(self.Dir2Coordinate[eachWall["direction"]])
 
       for i in xrange(length):
         newPos = startPos + aWallDirection*i
         aWall.add(tuple(newPos))
       self.walls.append((aWallDirection, aWall))
     print "Done wallUpdate. Length:", len(self.walls)
+    print self.walls
 
   def recvPublisher(self):
     result = json.loads(mainSocket.recv())
@@ -122,6 +148,9 @@ def main():
 
   stepCount = 1
   while(stepCount < 1000):
+    if stepCount == 1:
+      myPrey.printBoundary()
+
     print "------------------", "stepCount", stepCount, "------------------"
     if stepCount%2 == 1:
       #in this round, prey do nothing
