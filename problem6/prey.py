@@ -15,6 +15,7 @@ class Prey(object):
     self.publisherMsg = False;
     self.allDirs = {"0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
     self.Dir2Coordinate = {"N":(0.-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
+    self.getOppDir = {"S":"N", "N":"S", "W":"E", "E":"W", "WS":"NE", "SE":"NW", "NW":"SE", "NE":"SW"}
 
   def checkPosition(self):
     data = {"command":"P"}
@@ -60,8 +61,6 @@ class Prey(object):
     #return 2 if cannot be closed by any walls
     dir_P2H = self.getDriection(self.hunterPos, self.preyPos)
     hunterDirection = self.Dir2Coordinate[self.hunterDirection]
-    print "dir_P2H", dir_P2H
-    print "hunterDirection", hunterDirection
     product1 = hunterDirection[0]*dir_P2H[0]
     product2 = hunterDirection[1]*dir_P2H[1]
     if product1 >0 and product2 >0:
@@ -71,14 +70,12 @@ class Prey(object):
     else:
       return 1
 
-
-
   def checkWalls(self):
     return None
+
   def decideMove(self):
     print "preyAtBack", self.preyAtBack()
-
-    return None
+    return self.getOppDir[self.hunterDirection]
 
 def main():
   myPrey = Prey()
@@ -97,7 +94,7 @@ def main():
 
       #prey decide moves, and make move
       nextMove = myPrey.decideMove()
-      myPrey.addMove("NW")
+      myPrey.addMove(nextMove)
 
       #hunter will make move
       # socketH.send(json.dumps({"command":"M", "direction": "S"}))
