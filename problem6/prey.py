@@ -14,9 +14,9 @@ class Prey(object):
     self.wallString = ""
     self.walls = []
     self.publisherMsg = False
-    self.allDirs = {"0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
-    self.Dir2Coordinate = {"N":(0,-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
-    self.getOppDir = {"S":"N", "N":"S", "W":"E", "E":"W", "WS":"NE", "SE":"NW", "NW":"SE", "NE":"SW"}
+    self.allDirs = {"0_0":"X", "0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
+    self.Dir2Coordinate = {"X":(0,0), "N":(0,-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
+    self.getOppDir = {"X":"X", "S":"N", "N":"S", "W":"E", "E":"W", "WS":"NE", "SE":"NW", "NW":"SE", "NE":"SW"}
 
   def checkPosition(self):
     data = {"command":"P"}
@@ -47,6 +47,14 @@ class Prey(object):
     self.hunterDirection = self.allDirs[str(dx)+"_"+str(dy)]
     print self.hunterDirection
 
+  def getWallDirection(self, wallDir):
+    #wall direction can be list or letter, convert it to our numpy array format
+    if isinstance(wallDir, list):
+      direction = numpy.array(wallDir)
+    else:
+      direction = numpy.array(self.Dir2Coordinate[wallDir])
+    return direction
+
   def wallUpdate(self, walls):
     self.walls = []
     print "Before wallUpdate. Length:", len(self.walls)
@@ -54,16 +62,16 @@ class Prey(object):
       aWall = set()
       length = eachWall["length"]
       startPos = numpy.array(eachWall["position"])
-
-      if isinstance(eachWall["direction"], list):
-        direction = numpy.array(eachWall["direction"])
-      else:
-        direction = numpy.array(self.Dir2Coordinate[eachWall["direction"]])
+      aWallDirection = self.getWallDirection(eachWall["direction"])
+      # if isinstance(eachWall["direction"], list):
+      #   direction = numpy.array(eachWall["direction"])
+      # else:
+      #   direction = numpy.array(self.Dir2Coordinate[eachWall["direction"]])
 
       for i in xrange(length):
-        newPos = startPos + direction*i
+        newPos = startPos + aWallDirection*i
         aWall.add(tuple(newPos))
-      self.walls.append(aWall)
+      self.walls.append((aWallDirection, aWall))
     print "Done wallUpdate. Length:", len(self.walls)
 
   def recvPublisher(self):
@@ -96,7 +104,7 @@ class Prey(object):
 
   def getFarAndSeeIfThereIsAWall(self, idealDir):
     nextPosition = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
-    for wall in self.walls:
+    # for wall in self.walls:
 
     return idealDir
 
