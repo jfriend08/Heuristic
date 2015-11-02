@@ -1,5 +1,5 @@
 from websocket import create_connection
-import json
+import json, numpy
 
 mainSocket = create_connection('ws://localhost:1990');
 socketH = create_connection('ws://localhost:1991');
@@ -11,6 +11,7 @@ class Prey(object):
     self.preyPos = [230, 200];
     self.hunterPos = [0, 0];
     self.hunterDirection = None;
+    self.wallString = "";
     self.walls = [];
     self.publisherMsg = False;
     self.allDirs = {"0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
@@ -46,11 +47,26 @@ class Prey(object):
     self.hunterDirection = self.allDirs[str(dx)+"_"+str(dy)]
     print self.hunterDirection
 
+  def wallUpdate(self, walls):
+    for eachWall in walls:
+      aWall = set()
+      length = eachWall["length"]
+      startPos = numpy.array(eachWall["position"])
+      direction = numpy.array(self.Dir2Coordinate[eachWall["direction"]])
+      for i in xrange(length):
+        newPos = startPos + direction*i
+        aWall.add(tuple(newPos))
+      self.walls.append(aWall)
+
   def recvPublisher(self):
     result = json.loads(mainSocket.recv())
     self.updateHDriection(self.hunterPos, result["hunter"])
     self.preyPos = result["prey"]
     self.hunterPos = result["hunter"]
+    if not self.wallString == json.dumps(result["walls"]):
+      print "wallUpdate ..."
+      self.wallString = json.dumps(result["walls"])
+      self.wallUpdate(result["walls"])
     self.walls = result["walls"]
     print "preyPos", self.preyPos
     print "hunterPos", self.hunterPos
@@ -88,9 +104,9 @@ def main():
       # socketH.send(json.dumps({"command":"M", "direction": "S"}))
       myPrey.recvPublisher()
     elif stepCount%2 == 0:
-      #check states
-      myPrey.checkPosition()
-      myPrey.checkWalls()
+      # #check states
+      # myPrey.checkPosition()
+      # myPrey.checkWalls()
 
       #prey decide moves, and make move
       nextMove = myPrey.decideMove()
