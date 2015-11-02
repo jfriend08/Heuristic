@@ -1,5 +1,6 @@
 from websocket import create_connection
 import json, numpy
+from  scipy.spatial.distance import euclidean
 
 mainSocket = create_connection('ws://localhost:1990')
 socketH = create_connection('ws://localhost:1991')
@@ -16,7 +17,7 @@ class Prey(object):
     self.publisherMsg = False
     self.allDirs = {"0_0":"X", "0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
     self.Dir2Coordinate = {"X":(0,0), "N":(0,-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
-    self.getOppDir = {"X":"X", "S":"N", "N":"S", "W":"E", "E":"W", "WS":"NE", "SE":"NW", "NW":"SE", "NE":"SW"}
+    self.getOppDir = {"X":"X", "S":"N", "N":"S", "W":"E", "E":"W", "NE":"SW", "SW":"NE", "NW":"SE", "SE":"NW"}
     self.wallBoundary = self.setWallBoundary()
 
   def setWallBoundary(self):
@@ -42,7 +43,7 @@ class Prey(object):
       NorthBound.add(tuple(new_N_Point))
       new_W_Point = startP2 + westDir*i
       WestBound.add(tuple(new_W_Point))
-    return [(eastDir,EastBound), (southDir,SouthBound), (northDir,NorthBound), (westDir,WestBound)]
+    return [[eastDir.tolist(),EastBound], [southDir.tolist(),SouthBound], [northDir.tolist(),NorthBound], [westDir.tolist(),WestBound] ]
 
   def printBoundary(self):
     print self.wallBoundary
@@ -74,7 +75,7 @@ class Prey(object):
     dy = (1 if HPos1[1] - HPos0[1] > 0 else HPos1[1] - HPos0[1])
     dy = (-1 if HPos1[1] - HPos0[1] < 0 else dy)
     self.hunterDirection = self.allDirs[str(dx)+"_"+str(dy)]
-    print self.hunterDirection
+    print "hunterDirection", self.hunterDirection
 
   def getWallDirection(self, wallDir):
     #wall direction can be list or letter, convert it to our numpy array format
@@ -96,7 +97,7 @@ class Prey(object):
       for i in xrange(length):
         newPos = startPos + aWallDirection*i
         aWall.add(tuple(newPos))
-      self.walls.append((aWallDirection, aWall))
+      self.walls.append([aWallDirection.tolist(), aWall])
     print "Done wallUpdate. Length:", len(self.walls)
     print self.walls
 
@@ -109,7 +110,7 @@ class Prey(object):
       print "wallUpdate ..."
       self.wallString = json.dumps(result["walls"])
       self.wallUpdate(result["walls"])
-    self.walls = result["walls"]
+    # self.walls = result["walls"]
     print "preyPos", self.preyPos
     print "hunterPos", self.hunterPos
 
@@ -129,18 +130,25 @@ class Prey(object):
       return 1
 
   def getFarAndSeeIfThereIsAWall(self, idealDir):
+    # server will handle this case
+    pass
+    # nextPosition = tuple(numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir]))
+    # for (wallDirection, wallPointSet) in self.walls:
+    #   if nextPosition in wallPointSet:
+    #     print "hit the wall"
+
+  def checkNotGetCaughtByHunter(self, idealDir):
     nextPosition = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
-    # for wall in self.walls:
-
-    return idealDir
-
+    dist = euclidean(nextPosition, self.hunterPos)
+    print "nextPosition", nextPosition
+    print "self.hunterPos", self.hunterPos
+    print "dist", dist
 
   def decideMove(self):
     atBack = self.preyAtBack()
     idealDir = self.getOppDir[self.hunterDirection]
-    idealDir = self.getFarAndSeeIfThereIsAWall(idealDir)
-    print "preyAtBack", atBack
-    print "idealDir", idealDir
+    idealDir = self.checkNotGetCaughtByHunter(idealDir)
+    print "--preyAtBack", atBack, "--prey idealDir", idealDir
     return idealDir
 
 def main():
