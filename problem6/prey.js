@@ -38,19 +38,39 @@ socketP.onmessage = function(e){
 };
 
 
-socketP.onopen = function (e) {
-  console.log("socketP OPEN");
-  var moveCount = 1;
-  while (moveCount < 100) {
-    socketP.send(JSON.stringify({command:'P'}));
-    socketP.send(JSON.stringify({command:'W'}));
-    if (moveCount%2 == 1) {
-      socketP.send(JSON.stringify( {command:'M', direction: 'N'}) );
-    }
-    socketH.send(JSON.stringify({command:'M'}));
-    while(!publisherMsg) {}
+// socketP.onopen = function (e) {
+//   console.log("socketP OPEN");
+//   // var moveCount = 1;
+//   // while (moveCount < 100) {
+//   //   socketP.send(JSON.stringify({command:'P'}));
+//   //   socketP.send(JSON.stringify({command:'W'}));
+//   //   if (moveCount%2 == 1) {
+//   //     socketP.send(JSON.stringify( {command:'M', direction: 'N'}) );
+//   //   }
+//   //   socketH.send(JSON.stringify({command:'M'}));
+//   //   while(!publisherMsg) {}
 
-    moveCount++;
-    publisherMsg = false;
-  }
+//   //   moveCount++;
+//   //   publisherMsg = false;
+//   // }
+// }
+socketP.on('open', function(e) {
+  console.log('hi');
+  console.log(socketP.readyState)
+})
+
+// console.log(socketP.readyState)
+if(socketP) {
+  console.log('yo')
+  // socketP.send(JSON.stringify( {command:'M', direction: 'N'}));
 }
+// if(socketP.readyState != socketP.OPEN){
+//   console.error('Client state is ' + socketP.readyState);
+// }else {
+//   socketP.send(JSON.stringify( {command:'M', direction: 'N'}));
+// }
+// socketP.send(JSON.stringify( {command:'M', direction: 'N'}), function(err) {
+//   console.log('err');
+// });
+
+
