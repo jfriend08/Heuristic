@@ -138,7 +138,7 @@ class Prey(object):
     #   if nextPosition in wallPointSet:
     #     print "hit the wall"
 
-  def checkNotGetCaughtByHunter(self, idealDir):
+  def ifWillGetCaughtChangeDir(self, idealDir):
     # TODO: should be more determine to decide new_idealDir semi-opposit to self.hunterDirection, instead just rand
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
     nextPosition_hunter = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[self.hunterDirection])
@@ -160,7 +160,7 @@ class Prey(object):
   def decideMove(self):
     atBack = self.preyAtBack()
     idealDir = self.getOppDir[self.hunterDirection]
-    idealDir = self.checkNotGetCaughtByHunter(idealDir)
+    idealDir = self.ifWillGetCaughtChangeDir(idealDir)
     print "--preyAtBack", atBack, "--prey idealDir", idealDir
     return idealDir
 
