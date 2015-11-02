@@ -48,15 +48,23 @@ class Prey(object):
     print self.hunterDirection
 
   def wallUpdate(self, walls):
+    self.walls = []
+    print "Before wallUpdate. Length:", len(self.walls)
     for eachWall in walls:
       aWall = set()
       length = eachWall["length"]
       startPos = numpy.array(eachWall["position"])
-      direction = numpy.array(self.Dir2Coordinate[eachWall["direction"]])
+
+      if isinstance(eachWall["direction"], list):
+        direction = numpy.array(eachWall["direction"])
+      else:
+        direction = numpy.array(self.Dir2Coordinate[eachWall["direction"]])
+
       for i in xrange(length):
         newPos = startPos + direction*i
         aWall.add(tuple(newPos))
       self.walls.append(aWall)
+    print "Done wallUpdate. Length:", len(self.walls)
 
   def recvPublisher(self):
     result = json.loads(mainSocket.recv())
@@ -72,8 +80,8 @@ class Prey(object):
     print "hunterPos", self.hunterPos
 
   def preyAtBack(self):
-    #return 0 if can be close by both HorV walls
-    #return 1 if can be close by either HorV walls
+    #return 0 if can be close by both H or V walls
+    #return 1 if can be close by either H or V or Hor walls
     #return 2 if cannot be closed by any walls
     dir_P2H = self.getDriection(self.hunterPos, self.preyPos)
     hunterDirection = self.Dir2Coordinate[self.hunterDirection]
