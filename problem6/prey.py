@@ -179,10 +179,11 @@ class Prey(object):
     return (None, None, None, None)
 
   def hitEarly(self, idealDir):
+    idealDir_coor = list(self.Dir2Coordinate[idealDir])
     (hitPosition, wallDir, wallOppDir, wallSet) = self.getHitPoint(self.preyPos, self.Dir2Coordinate[idealDir])
 
     dist = (euclidean(hitPosition, self.preyPos) if hitPosition != None else 1000)
-    if dist > 40:
+    if dist > 250:
       return idealDir
 
     if hitPosition != None:
@@ -193,6 +194,23 @@ class Prey(object):
       if hitPosition1 != None and hitPosition2 != None:
         connectivity1 = wallSet1 + wallSet
         connectivity2 = wallSet2 + wallSet
+        if connectivity1 != None and connectivity2 != None:
+          # both walls are closed
+          pass
+        elif connectivity1 == None:
+          if (wallDir1[0] != 0):
+            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir1[0]>0 else -1*idealDir_coor[0])
+          if (wallDir1[1] != 0):
+            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir1[1]>0 else -1*idealDir_coor[1])
+        elif connectivity2 == None:
+          if (wallDir2[0] != 0):
+            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir2[0]>0 else -1*idealDir_coor[0])
+          if (wallDir2[1] != 0):
+            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir2[1]>0 else -1*idealDir_coor[1])
+        else:
+          return idealDir
+
+
         print "hitPosition1", hitPosition1, "wallDir1", wallDir1
       if hitPosition2 != None:
         print "hitPosition2", hitPosition2, "wallDir2", wallDir2
@@ -200,7 +218,8 @@ class Prey(object):
   def decideMove(self):
     atBack = self.preyAtBack()
     idealDir = self.getOppDir[self.hunterDirection]
-    if (idealDir != (0,0)):
+    print "idealDir", idealDir
+    if (idealDir != "X"):
       self.hitEarly(idealDir)
     idealDir = self.ifWillGetCaughtChangeDir(idealDir)
     print "--preyAtBack", atBack, "--prey idealDir", idealDir
