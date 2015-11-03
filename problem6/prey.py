@@ -167,7 +167,7 @@ class Prey(object):
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
     nextPosition_hunter = numpy.array(self.hunterPos) + 2*numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
-    if dist > 8:
+    if dist > 20:
       return idealDir
     else:
       '''Opps too close ==> run up or down! '''
