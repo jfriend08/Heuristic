@@ -18,6 +18,7 @@ class Prey(object):
     self.timeNow = None
     self.walls = []
     self.publisherMsg = False
+    self.willGetCaughtDist = 300
     self.allDirs = {(0,0):"X", (0,-1):"N", (0,1):"S", (1,0):"E", (-1,0):"W", (1,-1):"NE", (-1,-1):"NW", (1,1):"SE", (-1,1):"SW"}
     # self.allDirs = {"0_0":"X", "0_-1":"N", "0_1":"S", "1_0":"E", "-1_0":"W", "1_-1":"NE", "-1_-1":"NW", "1_1":"SE", "-1_1":"SW"}
     self.Dir2Coordinate = {"X":(0,0), "N":(0,-1), "S":(0,1), "E":(1,0), "W":(-1,0), "NE":(1,-1), "NW":(-1,-1), "SE":(1,1), "SW":(-1,1)}
@@ -168,8 +169,15 @@ class Prey(object):
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
     nextPosition_hunter = numpy.array(self.hunterPos) + 2*numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
+
     print "Inside ifWillGetCaughtChangeDir. Distance: ", dist
-    if dist > 80:
+
+    if self.willGetCaughtDist-dist < 0:
+      self.willGetCaughtDist = dist
+      return idealDir
+
+    self.willGetCaughtDist = dist
+    if dist > 100:
       return idealDir
     else:
       print "TOO close. RUN"
@@ -179,22 +187,22 @@ class Prey(object):
       for i in xrange(-40, 300):
         H_testPos = numpy.array(self.hunterPos) + i*numpy.array(hunterDirection_coor)
         if H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] >= H_testPos[1]:
-          '''situation will get caught and prey is at-or-above Hunter'''
+          '''situation will get caught and prey is at-or-below Hunter'''
           if hunterDirection_coor[1] > 0:
             print "consideration1"
-            runDir = (0, preyDirection_coor[1])
+            runDir = (preyDirection_coor[0], -1*preyDirection_coor[1])
           else:
             print "consideration2"
-            runDir = (0, -1*preyDirection_coor[1])
+            runDir = (-1*preyDirection_coor[0], preyDirection_coor[1])
           return self.allDirs[runDir]
         elif H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] < H_testPos[1]:
-          '''situation will get caught and prey is below Hunter'''
+          '''situation will get caught and prey is above Hunter'''
           if hunterDirection_coor[1] > 0:
             print "consideration3"
-            runDir = (0, -1*preyDirection_coor[1])
+            runDir = (-1*preyDirection_coor[0], preyDirection_coor[1])
           else:
             print "consideration4"
-            runDir = (0, preyDirection_coor[1])
+            runDir = (preyDirection_coor[0], -1*preyDirection_coor[1])
           return self.allDirs[runDir]
       return idealDir
 
@@ -231,6 +239,7 @@ class Prey(object):
       return idealDir
 
     dist = (euclidean(hitPosition, self.preyPos) if hitPosition != None else 1000)
+
     if dist > 100:
       return idealDir
 
@@ -251,16 +260,24 @@ class Prey(object):
         elif connectivity1 == None:
           ''' the idea for this is to change the ideaDirection to the wall1's hole where's not closed '''
           if (wallDir[0] != 0):
-            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir[0]>0 else -1*idealDir_coor[0])
+            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir[0]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[0])
+            # idealDir_coor[1] = (idealDir_coor[1] if hitPosition[0]!=self.preyPos[0] and hitPosition[1]!=self.preyPos[1] else 0)
+            # idealDir_coor[1] = 0
           if (wallDir[1] != 0):
+            # idealDir_coor[0] = (idealDir_coor[0] if hitPosition[0]!=self.preyPos[0] and hitPosition[1]!=self.preyPos[1] else 0)
+            # idealDir_coor[0] = 0
             idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir[1]>0 else -1*idealDir_coor[1])
           return self.allDirs[tuple(idealDir_coor)]
         elif connectivity2 == None:
           ''' the idea for this is to change the ideaDirection to the wall2's hole where's not closed '''
           if (wallOppDir[0] != 0):
-            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallOppDir[0]>0 else -1*idealDir_coor[0])
+            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallOppDir[0]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[0])
+            # idealDir_coor[1] = (idealDir_coor[1] if hitPosition[0]!=self.preyPos[0] and hitPosition[1]!=self.preyPos[1] else 0)
+            # idealDir_coor[1] = 0
           if (wallOppDir[1] != 0):
-            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 else -1*idealDir_coor[1])
+            # idealDir_coor[0] = 0
+            # idealDir_coor[0] = (idealDir_coor[0] if hitPosition[0]!=self.preyPos[0] and hitPosition[1]!=self.preyPos[1] else 0)
+            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[1])
           return self.allDirs[tuple(idealDir_coor)]
         else:
           return idealDir
@@ -269,18 +286,20 @@ class Prey(object):
         ''' Means if we follow wallDir then there we won't get closed '''
         ## TODO: consider connectivity?
         if (wallDir[0] != 0):
-          idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir[0]>0 else -1*idealDir_coor[0])
+          idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir[0]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[0])
+          # idealDir_coor[1] = 0
         if (wallDir[1] != 0):
-          idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir[1]>0 else -1*idealDir_coor[1])
+          # idealDir_coor[0] = 0
+          idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir[1]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[1])
         return self.allDirs[tuple(idealDir_coor)]
 
       elif hitPosition2 == None:
         ''' Means if we follow oppo-wallDir then there we won't get closed '''
         ## TODO: consider connectivity?
         if (wallOppDir[0] != 0):
-          idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallOppDir[0]>0 else -1*idealDir_coor[0])
+          idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallOppDir[0]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[0])
         if (wallOppDir[1] != 0):
-          idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 else -1*idealDir_coor[1])
+          idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[1])
         return self.allDirs[tuple(idealDir_coor)]
 
   def decideMove(self):
