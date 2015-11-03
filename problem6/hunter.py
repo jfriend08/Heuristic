@@ -255,7 +255,8 @@ class Hunter(object):
         cmd['wall'] = {'direction': self.short_side()}
 
     if len(self.walls) >= self.maxWalls:
-      return self.remove_walls(cmd)
+      cmd = self.remove_walls(cmd)
+      cmd['wall'] = {'direction': self.short_side()}
 
     return cmd
 
@@ -266,7 +267,8 @@ class Hunter(object):
       cmd['wall'] = {'direction': self.short_side()}
 
     if len(self.walls) >= self.maxWalls:
-      return self.remove_walls(cmd)
+      cmd = self.remove_walls(cmd)
+      cmd['wall'] = {'direction': self.short_side()}
 
     return cmd
 

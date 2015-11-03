@@ -113,7 +113,6 @@ class Prey(object):
 
   def recvPublisher(self):
     result = json.loads(mainSocket.recv())
-    # print "walls", result["walls"]
     self.updateHDriection(self.hunterPos, result["hunter"])
     self.gameover = result["gameover"]
     self.preyPos = result["prey"]
@@ -169,7 +168,7 @@ class Prey(object):
     nextPosition_hunter = numpy.array(self.hunterPos) + 2*numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
     print "Inside ifWillGetCaughtChangeDir. Distance: ", dist
-    if dist > 80:
+    if dist > 70:
       return idealDir
     else:
       print "TOO close. RUN"
