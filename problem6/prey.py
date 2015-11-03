@@ -167,9 +167,9 @@ class Prey(object):
     return idealDir
 
   def getHitPoint(self, position, direction):
-    print "position", position, "direction", direction
     positionAhead = numpy.array(position)
     headingDirection = numpy.array(direction)
+    print "getHitPoint. position", position, direction
     while positionAhead[0]!=0 and positionAhead[0]!=300 and positionAhead[1]!=0 and positionAhead[1]!=300:
       for (wall_dir, wall) in self.walls:
         if tuple(positionAhead) in wall:
@@ -180,22 +180,28 @@ class Prey(object):
 
   def hitEarly(self, idealDir):
     (hitPosition, wallDir, wallOppDir, wallSet) = self.getHitPoint(self.preyPos, self.Dir2Coordinate[idealDir])
+
+    dist = (euclidean(hitPosition, self.preyPos) if hitPosition != None else 1000)
+    if dist > 40:
+      return idealDir
+
     if hitPosition != None:
       # Means we hit wall
       print "hitPosition", hitPosition, "wallDir", wallDir, "wallOppDir", wallOppDir
       (hitPosition1, wallDir1, wallOppDir1, wallSet1) = self.getHitPoint(hitPosition, wallDir)
       (hitPosition2, wallDir2, wallOppDir2, wallSet2) = self.getHitPoint(hitPosition, wallOppDir)
-      if hitPosition1 != None:
+      if hitPosition1 != None and hitPosition2 != None:
+        connectivity1 = wallSet1 + wallSet
+        connectivity2 = wallSet2 + wallSet
         print "hitPosition1", hitPosition1, "wallDir1", wallDir1
       if hitPosition2 != None:
         print "hitPosition2", hitPosition2, "wallDir2", wallDir2
-    # print "headingDirection", headingDirection
-    # when headind to that direction but will hit early
 
   def decideMove(self):
     atBack = self.preyAtBack()
     idealDir = self.getOppDir[self.hunterDirection]
-    self.hitEarly(idealDir)
+    if (idealDir != (0,0)):
+      self.hitEarly(idealDir)
     idealDir = self.ifWillGetCaughtChangeDir(idealDir)
     print "--preyAtBack", atBack, "--prey idealDir", idealDir
     return idealDir
