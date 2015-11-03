@@ -167,19 +167,22 @@ class Prey(object):
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
     nextPosition_hunter = numpy.array(self.hunterPos) + 2*numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
-    if dist > 20:
+    print "Inside ifWillGetCaughtChangeDir", dist
+    if dist > 30:
       return idealDir
     else:
       '''Opps too close ==> run up or down! '''
+      hunterDirection_coor = list(self.Dir2Coordinate[self.hunterDirection])
+      preyDirection_coor = list(self.Dir2Coordinate[idealDir])
       for i in xrange(self.hunterPos[0], 300):
-        H_testPos = numpy.array(self.hunterPos) + i*numpy.array(self.Dir2Coordinate[self.hunterDirection])
+        H_testPos = numpy.array(self.hunterPos) + i*numpy.array(hunterDirection_coor)
         if H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] >= H_testPos[1]:
           '''situation will get caught and prey is at-or-above Hunter'''
-          runDir = (0, -1*nextPosition_prey[1])
+          runDir = (0, -1*preyDirection_coor[1])
           return self.allDirs[runDir]
         elif H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] < H_testPos[1]:
           '''situation will get caught and prey is below Hunter'''
-          runDir = (0, nextPosition_prey[1])
+          runDir = (0, preyDirection_coor[1])
           return self.allDirs[runDir]
       return idealDir
 
