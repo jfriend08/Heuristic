@@ -186,34 +186,57 @@ class Prey(object):
     if dist > 250:
       return idealDir
 
+    if hitPosition == None:
+      return hitPosition
+
     if hitPosition != None:
-      # Means we hit wall
+      # Means we will hit the wall within dist if we keep current idealDir
       print "hitPosition", hitPosition, "wallDir", wallDir, "wallOppDir", wallOppDir
       (hitPosition1, wallDir1, wallOppDir1, wallSet1) = self.getHitPoint(hitPosition, wallDir)
       (hitPosition2, wallDir2, wallOppDir2, wallSet2) = self.getHitPoint(hitPosition, wallOppDir)
+
       if hitPosition1 != None and hitPosition2 != None:
+        '''situation that will hit both wall'''
         connectivity1 = wallSet1 + wallSet
         connectivity2 = wallSet2 + wallSet
         if connectivity1 != None and connectivity2 != None:
           # both walls are closed
-          pass
+          # current method is to go the same direction as the Hunter. So to keep the area larger
+          return self.hunterDirection
         elif connectivity1 == None:
-          if (wallDir1[0] != 0):
-            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir1[0]>0 else -1*idealDir_coor[0])
-          if (wallDir1[1] != 0):
-            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir1[1]>0 else -1*idealDir_coor[1])
+          ''' the idea for this is to change the ideaDirection to the wall1's hole where's not closed '''
+          if (wallDir[0] != 0):
+            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir[0]>0 else -1*idealDir_coor[0])
+          if (wallDir[1] != 0):
+            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir[1]>0 else -1*idealDir_coor[1])
+          return self.allDirs[tuple(idealDir_coor)]
         elif connectivity2 == None:
-          if (wallDir2[0] != 0):
-            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir2[0]>0 else -1*idealDir_coor[0])
-          if (wallDir2[1] != 0):
-            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir2[1]>0 else -1*idealDir_coor[1])
+          ''' the idea for this is to change the ideaDirection to the wall2's hole where's not closed '''
+          if (wallOppDir[0] != 0):
+            idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallOppDir[0]>0 else -1*idealDir_coor[0])
+          if (wallOppDir[1] != 0):
+            idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 else -1*idealDir_coor[1])
+          return self.allDirs[tuple(idealDir_coor)]
         else:
           return idealDir
 
+      elif hitPosition1 == None:
+        ''' Means if we follow wallDir then there we won't get closed '''
+        ## TODO: consider connectivity?
+        if (wallDir[0] != 0):
+          idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallDir[0]>0 else -1*idealDir_coor[0])
+        if (wallDir[1] != 0):
+          idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallDir[1]>0 else -1*idealDir_coor[1])
+        return self.allDirs[tuple(idealDir_coor)]
 
-        print "hitPosition1", hitPosition1, "wallDir1", wallDir1
-      if hitPosition2 != None:
-        print "hitPosition2", hitPosition2, "wallDir2", wallDir2
+      elif hitPosition2 == None:
+        ''' Means if we follow oppo-wallDir then there we won't get closed '''
+        ## TODO: consider connectivity?
+        if (wallOppDir[0] != 0):
+          idealDir_coor[0] = (idealDir_coor[0] if idealDir_coor[0]*wallOppDir[0]>0 else -1*idealDir_coor[0])
+        if (wallOppDir[1] != 0):
+          idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 else -1*idealDir_coor[1])
+        return self.allDirs[tuple(idealDir_coor)]
 
   def decideMove(self):
     atBack = self.preyAtBack()
