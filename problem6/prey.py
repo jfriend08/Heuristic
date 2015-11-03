@@ -167,22 +167,33 @@ class Prey(object):
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
     nextPosition_hunter = numpy.array(self.hunterPos) + 2*numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
-    print "Inside ifWillGetCaughtChangeDir", dist
-    if dist > 30:
+    print "Inside ifWillGetCaughtChangeDir. Distance: ", dist
+    if dist > 50:
       return idealDir
     else:
+      print "TOO close. RUN"
       '''Opps too close ==> run up or down! '''
       hunterDirection_coor = list(self.Dir2Coordinate[self.hunterDirection])
       preyDirection_coor = list(self.Dir2Coordinate[idealDir])
-      for i in xrange(self.hunterPos[0], 300):
+      for i in xrange(-40, 300):
         H_testPos = numpy.array(self.hunterPos) + i*numpy.array(hunterDirection_coor)
         if H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] >= H_testPos[1]:
           '''situation will get caught and prey is at-or-above Hunter'''
-          runDir = (0, -1*preyDirection_coor[1])
+          if hunterDirection_coor[1] > 0:
+            print "consideration1"
+            runDir = (0, preyDirection_coor[1])
+          else:
+            print "consideration2"
+            runDir = (0, -1*preyDirection_coor[1])
           return self.allDirs[runDir]
         elif H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] < H_testPos[1]:
           '''situation will get caught and prey is below Hunter'''
-          runDir = (0, preyDirection_coor[1])
+          if hunterDirection_coor[1] > 0:
+            print "consideration3"
+            runDir = (0, -1*preyDirection_coor[1])
+          else:
+            print "consideration4"
+            runDir = (0, preyDirection_coor[1])
           return self.allDirs[runDir]
       return idealDir
 
@@ -230,8 +241,8 @@ class Prey(object):
 
       if hitPosition1 != None and hitPosition2 != None:
         '''situation that will hit both wall'''
-        connectivity1 = wallSet1 + wallSet
-        connectivity2 = wallSet2 + wallSet
+        connectivity1 = wallSet1 & wallSet
+        connectivity2 = wallSet2 & wallSet
         if connectivity1 != None and connectivity2 != None:
           # both walls are closed
           # current method is to go the same direction as the Hunter. So to keep the area larger
