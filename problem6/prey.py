@@ -148,23 +148,53 @@ class Prey(object):
     #   if nextPosition in wallPointSet:
     #     print "hit the wall"
 
+  def hitWallThenChange(self, idealDir):
+    idealDir_coor = list(self.Dir2Coordinate[idealDir])
+    if self.preyPos[0] == 0 and idealDir_coor[0]<0:
+      idealDir_coor[0] = 0
+    elif self.preyPos[0] == 300 and idealDir_coor[0]>0:
+      idealDir_coor[0] = 0
+    elif self.preyPos[1] == 0 and idealDir_coor[1]<0:
+      idealDir_coor[1] = 0
+    elif self.preyPos[1] == 300 and idealDir_coor[1]>0:
+      idealDir_coor[1] = 0
+    return self.allDirs[tuple(idealDir_coor)]
+
+
+
   def ifWillGetCaughtChangeDir(self, idealDir):
     # TODO: should be more determine to decide new_idealDir semi-opposit to self.hunterDirection, instead just rand
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
-    nextPosition_hunter = numpy.array(self.hunterPos) + numpy.array(self.Dir2Coordinate[self.hunterDirection])
+    nextPosition_hunter = numpy.array(self.hunterPos) + 2*numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
+    if dist > 8:
+      return idealDir
+    else:
+      '''Opps too close ==> run up or down! '''
+      for i in xrange(self.hunterPos[0], 300):
+        H_testPos = numpy.array(self.hunterPos) + i*numpy.array(self.Dir2Coordinate[self.hunterDirection])
+        if H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] >= H_testPos[1]:
+          '''situation will get caught and prey is at-or-above Hunter'''
+          runDir = (0, -1*nextPosition_prey[1])
+          return self.allDirs[runDir]
+        elif H_testPos[0] == nextPosition_prey[0] and nextPosition_prey[1] < H_testPos[1]:
+          '''situation will get caught and prey is below Hunter'''
+          runDir = (0, nextPosition_prey[1])
+          return self.allDirs[runDir]
+      return idealDir
 
-    considerCount = 0
-    while dist <= 6 and considerCount<15:
-      dirIdx = randint(0,len(self.allDirs.keys())-1);
-      new_idealDir = self.allDirs[self.allDirs.keys()[dirIdx]]
-      nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[new_idealDir])
-      dist = euclidean(nextPosition_prey, nextPosition_hunter)
-      idealDir = new_idealDir
-      print "may get caught new_idealDir", new_idealDir
-      print "may get caught idealDir", idealDir
-      considerCount += 1
-    return idealDir
+    # #Below are rand method, but not determinded enough
+    # considerCount = 0
+    # while dist <= 6 and considerCount<15:
+    #   dirIdx = randint(0,len(self.allDirs.keys())-1);
+    #   new_idealDir = self.allDirs[self.allDirs.keys()[dirIdx]]
+    #   nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[new_idealDir])
+    #   dist = euclidean(nextPosition_prey, nextPosition_hunter)
+    #   idealDir = new_idealDir
+    #   print "may get caught new_idealDir", new_idealDir
+    #   print "may get caught idealDir", idealDir
+    #   considerCount += 1
+    # return idealDir
 
   def getHitPoint(self, position, direction):
     positionAhead = numpy.array(position)
@@ -182,12 +212,12 @@ class Prey(object):
     idealDir_coor = list(self.Dir2Coordinate[idealDir])
     (hitPosition, wallDir, wallOppDir, wallSet) = self.getHitPoint(self.preyPos, self.Dir2Coordinate[idealDir])
 
-    dist = (euclidean(hitPosition, self.preyPos) if hitPosition != None else 1000)
-    if dist > 250:
+    if hitPosition == None:
       return idealDir
 
-    if hitPosition == None:
-      return hitPosition
+    dist = (euclidean(hitPosition, self.preyPos) if hitPosition != None else 1000)
+    if dist > 100:
+      return idealDir
 
     if hitPosition != None:
       # Means we will hit the wall within dist if we keep current idealDir
@@ -243,8 +273,14 @@ class Prey(object):
     idealDir = self.getOppDir[self.hunterDirection]
     print "idealDir", idealDir
     if (idealDir != "X"):
-      self.hitEarly(idealDir)
+      idealDir = self.hitEarly(idealDir)
+      print "after hitEarly. idealDir", idealDir
     idealDir = self.ifWillGetCaughtChangeDir(idealDir)
+    print "after ifWillGetCaughtChangeDir. idealDir", idealDir
+
+    idealDir = self.hitWallThenChange(idealDir)
+    print "after hitWallThenChange. idealDir", idealDir
+
     print "--preyAtBack", atBack, "--prey idealDir", idealDir
     return idealDir
 
