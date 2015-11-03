@@ -301,19 +301,25 @@ class Prey(object):
         if (wallOppDir[1] != 0):
           idealDir_coor[1] = (idealDir_coor[1] if idealDir_coor[1]*wallOppDir[1]>0 and self.preyAtBack() == 2 else -1*idealDir_coor[1])
         return self.allDirs[tuple(idealDir_coor)]
+  def getPandHDist(self):
+    dist = euclidean(self.hunterPos, self.preyPos)
 
   def decideMove(self):
     atBack = self.preyAtBack()
     idealDir = self.getOppDir[self.hunterDirection]
-    print "idealDir", idealDir
-    if (idealDir != "X"):
-      idealDir = self.hitEarly(idealDir)
-      print "after hitEarly. idealDir", idealDir
-    idealDir = self.ifWillGetCaughtChangeDir(idealDir)
-    print "after ifWillGetCaughtChangeDir. idealDir", idealDir
 
-    idealDir = self.hitWallThenChange(idealDir)
-    print "after hitWallThenChange. idealDir", idealDir
+    if euclidean(self.hunterPos, self.preyPos) < 100 :
+      idealDir = self.ifWillGetCaughtChangeDir(idealDir)
+      print "after ifWillGetCaughtChangeDir. idealDir", idealDir
+    else:
+      print "idealDir", idealDir
+      if (idealDir != "X"):
+        idealDir = self.hitEarly(idealDir)
+        print "after hitEarly. idealDir", idealDir
+      idealDir = self.hitWallThenChange(idealDir)
+      print "after hitWallThenChange. idealDir", idealDir
+      # idealDir = self.ifWillGetCaughtChangeDir(idealDir)
+      # print "after ifWillGetCaughtChangeDir. idealDir", idealDir
 
     print "--preyAtBack", atBack, "--prey idealDir", idealDir
     return idealDir
