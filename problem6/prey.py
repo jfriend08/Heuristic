@@ -141,12 +141,12 @@ class Prey(object):
   def ifWillGetCaughtChangeDir(self, idealDir):
     # TODO: should be more determine to decide new_idealDir semi-opposit to self.hunterDirection, instead just rand
     nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[idealDir])
-    nextPosition_hunter = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[self.hunterDirection])
+    nextPosition_hunter = numpy.array(self.hunterPos) + numpy.array(self.Dir2Coordinate[self.hunterDirection])
     dist = euclidean(nextPosition_prey, nextPosition_hunter)
 
     considerCount = 0
     while dist <= 6 and considerCount<15:
-      dirIdx = randint(0,len(self.allDirs.keys()));
+      dirIdx = randint(0,len(self.allDirs.keys())-1);
       new_idealDir = self.allDirs[self.allDirs.keys()[dirIdx]]
       nextPosition_prey = numpy.array(self.preyPos) + numpy.array(self.Dir2Coordinate[new_idealDir])
       dist = euclidean(nextPosition_prey, nextPosition_hunter)
