@@ -13,7 +13,6 @@ class Hunter(object):
     self.cooldown = cooldown
     self.maxWalls = maxWalls
     self.lastTimeBuiltWall = -1
-    self.straight = 0
     self.grid = {
       'left': {
         'position': [-1, -1],
@@ -276,21 +275,11 @@ class Hunter(object):
   def make_move(self, cmd):
     self.walls = cmd['walls']
     self.direction = [cmd['hunter'][0] - self.hunter[0], cmd['hunter'][1] - self.hunter[1]]
-    if 0 in self.direction:
-      self.straight += 1
-    else:
-      self.straight = 0
     self.hunter = cmd['hunter']
     self.prey = cmd['prey']
     self.time = cmd['time']
 
-    if self.straight >= 10:
-      cmd = {
-        'command': 'D',
-        'wallIds': [w['id'] for w in self.walls]
-      }
-      return cmd
-    elif self.prey_in_front():
+    if self.prey_in_front():
       return self.move_in_front()
     else:
       return self.move_in_back()

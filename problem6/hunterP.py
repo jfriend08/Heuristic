@@ -295,7 +295,7 @@ class Hunter(object):
 
 
 def main():
-  hunter = Hunter(3, 5)
+  hunter = Hunter(3, 100)
   socketH.send(json.dumps({'command': 'M'}))
 
   gameover = False
