@@ -56,6 +56,7 @@ public class Client {
         ArrayList<String[]> boardList = new ArrayList<String[]>();
         ArrayList<String[]> playerList = new ArrayList<String[]>();
         Boolean firstMeedPlayerList = true;
+
         for (int i=1; i<lines.length; i++){
             String lineElms[] = lines[i].split(",");
             System.out.println(i + " length: " + lineElms.length);
@@ -73,7 +74,24 @@ public class Client {
                 continue;
             }
         }
+
+        int [] nodeCountArray = new int[boardList.size()];
+        System.out.println( Arrays.toString(nodeCountArray));
         for (int i=0; i<boardList.size(); i++){
+            System.out.println( "boardList.get(i)[3] " + boardList.get(i)[3] );
+            if (boardList.get(i)[3].matches("FREE")) {
+                System.out.println("Hi FREE");
+                for (int j=4; j<boardList.get(i).length; j++) {
+                    if (!boardList.get(i)[j].equals("null")){
+                        System.out.println("Hi not null");
+                        nodeCountArray[i]++;
+                    }
+                }
+            }
+            // System.out.println( i+"th in boardList: " + Arrays.toString(boardList.get(i)) );
+        }
+        for(int i=0; i<boardList.size(); i++) {
+            System.out.println( "Node " +i + " Counts:"+ nodeCountArray[i]);
             System.out.println( i+"th in boardList: " + Arrays.toString(boardList.get(i)) );
         }
         for (int i=0; i<playerList.size(); i++){
