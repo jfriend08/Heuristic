@@ -77,26 +77,41 @@ public class Client {
 
         int [] nodeCountArray = new int[boardList.size()];
         System.out.println( Arrays.toString(nodeCountArray));
+
+        //perform linkage counts
         for (int i=0; i<boardList.size(); i++){
-            System.out.println( "boardList.get(i)[3] " + boardList.get(i)[3] );
             if (boardList.get(i)[3].matches("FREE")) {
-                System.out.println("Hi FREE");
                 for (int j=4; j<boardList.get(i).length; j++) {
                     if (!boardList.get(i)[j].equals("null")){
-                        System.out.println("Hi not null");
                         nodeCountArray[i]++;
                     }
                 }
             }
-            // System.out.println( i+"th in boardList: " + Arrays.toString(boardList.get(i)) );
         }
-        for(int i=0; i<boardList.size(); i++) {
-            System.out.println( "Node " +i + " Counts:"+ nodeCountArray[i]);
-            System.out.println( i+"th in boardList: " + Arrays.toString(boardList.get(i)) );
+
+        for (int i=0; i<nodeCountArray.length; i++) {
+            if (nodeCountArray[i] == 1) {
+                String[] subA = Arrays.copyOfRange(boardList.get(i), 4, 8);
+                System.out.println( Arrays.toString(subA) );
+            }
         }
         for (int i=0; i<playerList.size(); i++){
             System.out.println( i+"th in playerList: " + Arrays.toString(playerList.get(i)) );
         }
+    }
+    public static ArrayList<ArrayList<String>> getNodeIdxOnPath(ArrayList<String[]> boardList, ArrayList<String> preNodeIdxs, int starNodeIdx) {
+        String[] subA = Arrays.copyOfRange(boardList.get(starNodeIdx), 3, 8);
+        ArrayList<ArrayList<String>> result = new ArrayList<ArrayList<String>>();
+        if (!subA[0].equals("FREE")) {
+            return result.add(preNodeIdxs);
+        }
+        for (int i=1; i<subA.length; i++) {
+            if (!subA[i].equals("null") && preNodeIdxs.contains(subA[i])) {
+                preNodeIdxs.add(subA[i]);
+                result = getNodeIdxOnPath(boardList, preNodeIdxs, subA[i]);
+            }
+        }
+        return result;
     }
 }
 
