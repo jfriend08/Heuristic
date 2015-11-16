@@ -1,0 +1,264 @@
+<html>
+
+<head>
+    <script src="assets/jquery-2.1.4.js"></script>
+    <script src="assets/underscore.js"></script>
+
+
+    <style>
+        .square {
+            width: 35px;
+            height: 35px;
+            background-color: black;
+            border: 5px ridge darkblue;
+            float: left;
+            box-sizing: border-box;
+
+        }
+
+        .row {
+            height: 35px;
+            clear: both;
+        }
+
+        .data{
+            background-color: aliceblue;
+            width: 60px;
+            height: 35px;
+            float: left;
+        }
+
+
+    </style>
+</head>
+
+<body>
+<script>
+
+    var higherLevelDiv = undefined;
+    var squares = {};
+    var nodeList;
+    var playerStat;
+    var maxXCoord;
+    var maxYCoord;
+
+    function poll(){
+//        if(higherLevelDiv !== undefined){
+//            higherLevelDiv.parentNode.removeChild(higherLevelDiv);
+//        }
+        if(higherLevelDiv === undefined){
+            higherLevelDiv = document.createElement('div');
+            document.body.appendChild(higherLevelDiv);
+        }
+        console.log("POLLING");
+        $.ajax({
+            url: '/game-state'
+        }).done(function (data) {
+            nodeList = _.map(data.nodes, function(item) {
+                return item
+            });
+
+//            playerStat = _.map(data.playerStats, function(item, k) {
+//                return {k: item}
+//            });
+
+            playerStat = data.playerStats;
+
+//            var players = _.map(data.playerStats, function(playerId, stats){
+//                console.log(stats)
+//                _.each(playerId, function(sat){
+//                            console.log(sat)
+//                        });
+//            });
+
+            if(jQuery.isEmptyObject(squares)){
+
+
+                var maxX = _.max(nodeList, function (node) {
+                    return node.xLoc;
+                }).xLoc;
+
+                maxXCoord = maxX;
+
+                var maxY = _.max(nodeList, function (node) {
+                    return node.yLoc;
+                }).yLoc;
+
+                maxYCoord = maxY;
+
+                for (var i = maxY; i >= 0; i--) {
+                    var row = document.createElement('div');
+                    row.className = 'row';
+
+
+                    higherLevelDiv.appendChild(row);
+
+                    for (var j = 0; j <= maxX + 6; j++) {
+                        var square = document.createElement('div');
+
+                        if(j > maxX && (i === maxY || i === maxY -1 || i === maxY - 2)){
+                            square.className = 'data';
+                            console.log(j + "," + i)
+                            console.log(square)
+                            squares[j + ',' + i] = square;
+                            row.appendChild(square)
+                        }else if(j<=maxX){
+                            square.className = 'square';
+                            squares[j + ',' + i] = square;
+                            row.appendChild(square)
+                        }
+
+
+
+//                        //Add header and player icons
+//                        if((i === maxY ) && j === maxX){
+//
+//
+//                            //playerValue.innerHTML = '!!!'
+//                            row.appendChild(playerValue)
+//                        }
+
+                    }
+                }
+
+
+
+                var nodeMap = _.map(data.edges, function(edgeInfo, nodeId) {
+                    var node = data.nodes[nodeId];
+                    var square = squares[node.xLoc + ',' + node.yLoc];
+
+                    if(edgeInfo['UP'] !== undefined) {
+                        square.style.borderTop = 'dotted'
+                    }
+
+                    if(edgeInfo['DOWN'] !== undefined) {
+                        square.style.borderBottom = 'dotted'
+                    }
+
+                    if(edgeInfo['LEFT'] !== undefined) {
+                        square.style.borderLeft = 'dotted'
+                    }
+
+                    if(edgeInfo['RIGHT'] !== undefined) {
+
+                        square.style.borderRight = 'dotted'
+                    }
+
+                });
+
+
+                header(maxXCoord,maxYCoord);
+                player1(maxXCoord, maxYCoord - 1);
+                player2(maxXCoord, maxYCoord - 2);
+                repaint();
+            }else{
+                header(maxXCoord,maxYCoord);
+                player1(maxXCoord, maxYCoord - 1);
+                player2(maxXCoord, maxYCoord - 2);
+                repaint();
+            }
+        });
+        setTimeout(poll,50)
+    }
+
+    function repaint(){
+
+        //Paint the player stats
+
+
+        _.each(nodeList, function(node){
+            var square = squares[node.xLoc + ',' + node.yLoc];
+
+            if(node.status == 'FREE') {
+                square.style.backgroundColor = 'lightblue';
+            }
+
+            if(node.status == 'EATEN_P1') {
+                square.style.backgroundColor = 'gold';
+                if(square.hasChildNodes()){
+                    square.removeChild(square.firstChild)
+                }
+            }
+
+            if(node.status == 'EATEN_P2') {
+                square.style.backgroundColor = 'darkorange';
+                if(square.hasChildNodes()){
+                    square.removeChild(square.firstChild)
+                }
+            }
+
+            if(node.status == 'OCCUPIED_P1') {
+
+                if(square.hasChildNodes() === false){
+                    var bert = document.createElement('img');
+                    bert.src = 'assets/bertleft.png';
+                    square.appendChild(bert);
+                    square.style.backgroundColor = 'gold';
+                }
+
+            }
+
+            if(node.status == 'OCCUPIED_P2') {
+                if(square.hasChildNodes() === false){
+                    var coily = document.createElement('img');
+                    coily.src = 'assets/coily.png';
+                    square.appendChild(coily);
+                    square.style.backgroundColor = 'darkorange';
+                }
+            }
+        });
+    }
+    //Wrtie the header. i and j are the indcies for the first square
+    function header(x , y){
+        squares[(x + 2) + ',' + y].innerHTML = "Team";
+        squares[(x + 3)+ ',' + y].innerHTML = "Remain";
+        squares[(x + 4)+ ',' + y].innerHTML = "Used";
+        squares[(x + 5) + ',' + y].innerHTML = "In Play";
+        squares[(x + 6) + ',' + y].innerHTML = "Score";
+    }
+
+    function player1(x, y){
+
+        if(squares[(x + 1) + ',' + y].hasChildNodes() === false){
+            var bert = document.createElement('img');
+            bert.src = 'assets/bertleft.png';
+            squares[(x + 1) + ',' + y].appendChild(bert);
+        }
+
+        if(playerStat["ONE"] !== undefined){
+            var list = playerStat["ONE"];
+            squares[(x + 2) + ',' + y].innerHTML = list[0];
+            squares[(x + 3)+ ',' + y].innerHTML = list[1];
+            squares[(x + 4)+ ',' + y].innerHTML = list[2];
+            squares[(x + 5) + ',' + y].innerHTML = list[3];
+            squares[(x + 6) + ',' + y].innerHTML = list[4];
+        }
+
+    }
+
+    function player2(x, y){
+
+        if(squares[(x + 1) + ',' + y].hasChildNodes() === false){
+            var coily = document.createElement('img');
+            coily.src = 'assets/coily.png';
+            squares[(x + 1) + ',' + y].appendChild(coily);
+        }
+
+        if(playerStat["TWO"] !== undefined){
+            var list = playerStat["TWO"];
+            squares[(x + 2) + ',' + y].innerHTML = list[0];
+            squares[(x + 3)+ ',' + y].innerHTML = list[1];
+            squares[(x + 4)+ ',' + y].innerHTML = list[2];
+            squares[(x + 5) + ',' + y].innerHTML = list[3];
+            squares[(x + 6) + ',' + y].innerHTML = list[4];
+        }
+    }
+
+    poll();
+
+</script>
+
+
+</body>
+
+</html>
