@@ -39,6 +39,7 @@ class Client(protocol.Protocol):
     self.playerStates = {}
     self.Paths = []
     self.receiveCount = 0
+    self.totalNanos = None
 
   def reset(self):
     print "Reset called"
@@ -66,6 +67,8 @@ class Client(protocol.Protocol):
           if not startToSavePlayer:
             self.nodeStates[states[0]] = {'loc':[states[1], states[2]], 'state':states[3], 'linkage':states[4:len(states)]}
           else:
+            if self.totalNanos == None:
+              self.totalNanos = states[2]
             self.playerStates[states[1]] = {'id':states[0], 'remain':states[2], 'used':states[3] , 'inPlay':states[4] , 'score':states[5]}
         else:
           startToSavePlayer = True
@@ -128,13 +131,13 @@ class Client(protocol.Protocol):
     return result
 
   def bfsFindPathWithPath(self, visitedIdx, startIdx, directions, depth, counter):
-    print "visitedIdx", visitedIdx, "startIdx", startIdx, "directions", directions, "depth", depth
+    # print "visitedIdx", visitedIdx, "startIdx", startIdx, "directions", directions, "depth", depth
     noMoveCount = 0
     while noMoveCount != 4:
       currDir = directions[counter%4]
       linkList = self.nodeStates[startIdx]['linkage']
-      print "startIdx"+ startIdx+ "-->", self.nodeStates[startIdx]['linkage']
-      print "counter", counter, "currDir", currDir, "linkList[currDir]", linkList[currDir]
+      # print "startIdx"+ startIdx+ "-->", self.nodeStates[startIdx]['linkage']
+      # print "counter", counter, "currDir", currDir, "linkList[currDir]", linkList[currDir]
       if linkList[currDir] != "null" and linkList[currDir] not in visitedIdx and startIdx not in visitedIdx:
         visitedIdx.append(startIdx)
         startIdx = linkList[currDir]
@@ -166,21 +169,29 @@ class Client(protocol.Protocol):
     self.Paths = []
     thinkresult = []
     count2Consider = 0
-    while len(thinkresult) <= 0:
+    whileCount = 0
+    while len(thinkresult) <= 0 and whileCount<=4:
       count2Consider+=1
+      whileCount+=1
+      if whileCount==4:
+        print "++++++++++ ohohoh ++++++++++"
+        print "nodeConCount", self.nodeConCount
+        count2Consider = 0
       for i in xrange(len(self.nodeConCount)):
         count = self.nodeConCount[i]
         curNodeIdx = str(i)
         if count == count2Consider:
           result = self.bfsFindPath2([], curNodeIdx, [], 0)
           allDirs = self.getalldir(result)
-          print '----------------------------------------'
+          # print '----------------------------------------'
           for eachDir in allDirs:
             fullPath = self.bfsFindPathWithPath([], curNodeIdx, eachDir, 0, 0)
             # print "FINAL:", fullPath
             thinkresult.append((fullPath, eachDir))
       thinkresult.sort(key=lambda tup: len(tup[0]))
       print "thinkresult", thinkresult
+    if len(thinkresult) == 0:
+      return (None, None)
     return thinkresult[-1]
 
 
@@ -198,8 +209,13 @@ class Client(protocol.Protocol):
   def dataReceived(self, data):
     self.parseStates(data)
     pos, dirs = self.thinkMove()
-    myR = pos[0]+","+",".join(map(self.code2Letter, dirs))+"\n"
+    if pos != None:
+      myR = pos[0]+","+",".join(map(self.code2Letter, dirs))+"\n"
+    else:
+      myR = "PASS\n"
+
     print "myR", myR
+    print "totalNanos", self.totalNanos, self.playerStates
     # myR = str(random.randint(0, len(self.nodeStates.keys()))) + ",UP,DOWN,LEFT,RIGHT" + "\n"
     self.transport.write(myR)
 
