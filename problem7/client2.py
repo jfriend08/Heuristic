@@ -4,6 +4,7 @@ import random
 import time
 import argparse
 from twisted.internet import reactor, protocol
+import numpy as np
 
 board_size = 1000
 
@@ -99,7 +100,6 @@ class Client(protocol.Protocol):
     self.bfsFindPath(visitedIdx, startIdx)
 
   def bfsFindPath2(self, visitedIdx, startIdx, directions, depth):
-    print "visitedIdx", visitedIdx, "startIdx", startIdx, "directions", directions, "depth", depth
     if startIdx == "null":
       return
     if self.nodeStates[startIdx]['state']!="FREE":
@@ -127,20 +127,65 @@ class Client(protocol.Protocol):
       return (visitedIdx, directions)
     return result
 
+  def bfsFindPathWithPath(self, visitedIdx, startIdx, directions, depth, counter):
+    print "visitedIdx", visitedIdx, "startIdx", startIdx, "directions", directions, "depth", depth
+    noMoveCount = 0
+    while noMoveCount != 4:
+      currDir = directions[counter%4]
+      linkList = self.nodeStates[startIdx]['linkage']
+      print "startIdx"+ startIdx+ "-->", self.nodeStates[startIdx]['linkage']
+      print "counter", counter, "currDir", currDir, "linkList[currDir]", linkList[currDir]
+      if linkList[currDir] != "null" and linkList[currDir] not in visitedIdx and startIdx not in visitedIdx:
+        visitedIdx.append(startIdx)
+        startIdx = linkList[currDir]
+        noMoveCount=0
+      else:
+        noMoveCount+=1
+      counter+=1
+    visitedIdx.append(startIdx)
+    return visitedIdx
+
+  def fillRemainDir(self, dirs):
+    remain = []
+    for i in xrange(4):
+      if i not in dirs:
+        remain.append(i)
+    dirs.extend(remain)
+    return dirs
+
+
+  def getalldir (self, result):
+    newDirs = []
+    if not result:
+      return newDirs
+    for idx in xrange(1,len(result),2):
+      newDirs.append(self.fillRemainDir(result[idx]))
+    return newDirs
+
   def thinkMove(self):
     self.Paths = []
+    thinkresult = []
     for i in xrange(len(self.nodeConCount)):
       count = self.nodeConCount[i]
       curNodeIdx = str(i)
       if count == 1:
-        print self.bfsFindPath2([], curNodeIdx, [], 0)
-        
+        result = self.bfsFindPath2([], curNodeIdx, [], 0)
+        allDirs = self.getalldir(result)
+        print '----------------------------------------'
+        for eachDir in allDirs:
+          fullPath = self.bfsFindPathWithPath([], curNodeIdx, eachDir, 0, 0)
+          # print "FINAL:", fullPath
+          thinkresult.append((fullPath, eachDir))
+    print "thinkresult", thinkresult
+
+
+
 
 
   def dataReceived(self, data):
     self.parseStates(data)
     myR = self.thinkMove()
-    myR = str(random.randint(0, 158)) + ",UP,DOWN,LEFT,RIGHT" + "\n"
+    myR = str(random.randint(0, len(self.nodeStates.keys()))) + ",UP,DOWN,LEFT,RIGHT" + "\n"
     self.transport.write(myR)
 
 
