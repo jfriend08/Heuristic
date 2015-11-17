@@ -165,27 +165,42 @@ class Client(protocol.Protocol):
   def thinkMove(self):
     self.Paths = []
     thinkresult = []
-    for i in xrange(len(self.nodeConCount)):
-      count = self.nodeConCount[i]
-      curNodeIdx = str(i)
-      if count == 1:
-        result = self.bfsFindPath2([], curNodeIdx, [], 0)
-        allDirs = self.getalldir(result)
-        print '----------------------------------------'
-        for eachDir in allDirs:
-          fullPath = self.bfsFindPathWithPath([], curNodeIdx, eachDir, 0, 0)
-          # print "FINAL:", fullPath
-          thinkresult.append((fullPath, eachDir))
-    print "thinkresult", thinkresult
+    count2Consider = 0
+    while len(thinkresult) <= 0:
+      count2Consider+=1
+      for i in xrange(len(self.nodeConCount)):
+        count = self.nodeConCount[i]
+        curNodeIdx = str(i)
+        if count == count2Consider:
+          result = self.bfsFindPath2([], curNodeIdx, [], 0)
+          allDirs = self.getalldir(result)
+          print '----------------------------------------'
+          for eachDir in allDirs:
+            fullPath = self.bfsFindPathWithPath([], curNodeIdx, eachDir, 0, 0)
+            # print "FINAL:", fullPath
+            thinkresult.append((fullPath, eachDir))
+      thinkresult.sort(key=lambda tup: len(tup[0]))
+      print "thinkresult", thinkresult
+    return thinkresult[-1]
 
 
 
-
+  def code2Letter(self, code):
+    if code == 0:
+      return "UP"
+    elif code ==1:
+      return "DOWN"
+    elif code ==2:
+      return "LEFT"
+    else:
+      return "RIGHT"
 
   def dataReceived(self, data):
     self.parseStates(data)
-    myR = self.thinkMove()
-    myR = str(random.randint(0, len(self.nodeStates.keys()))) + ",UP,DOWN,LEFT,RIGHT" + "\n"
+    pos, dirs = self.thinkMove()
+    myR = pos[0]+","+",".join(map(self.code2Letter, dirs))+"\n"
+    print "myR", myR
+    # myR = str(random.randint(0, len(self.nodeStates.keys()))) + ",UP,DOWN,LEFT,RIGHT" + "\n"
     self.transport.write(myR)
 
 
