@@ -40,6 +40,7 @@ class Client(protocol.Protocol):
     self.Paths = []
     self.receiveCount = 0
     self.totalNanos = None
+    self.numNanosMaintain = 0
 
   def reset(self):
     print "Reset called"
@@ -165,7 +166,7 @@ class Client(protocol.Protocol):
       newDirs.append(self.fillRemainDir(result[idx]))
     return newDirs
 
-  def thinkMove(self):
+  def thinkMove(self, returnNumbers):
     self.Paths = []
     thinkresult = []
     count2Consider = 0
@@ -189,10 +190,21 @@ class Client(protocol.Protocol):
             # print "FINAL:", fullPath
             thinkresult.append((fullPath, eachDir))
       thinkresult.sort(key=lambda tup: len(tup[0]))
-      print "thinkresult", thinkresult
+      print "thinkresult in thinkMove", thinkresult
     if len(thinkresult) == 0:
       return (None, None)
-    return thinkresult[-1]
+
+    returnPack = []
+    for idx in xrange(-1, -len(thinkresult)-1, -1):
+      print "idx", idx, "len(returnPack)", len(returnPack)
+      if len(returnPack)==0:
+        returnPack.append(thinkresult[idx])
+      elif len(returnPack) == returnNumbers:
+        break
+      elif thinkresult[idx][0][0] != returnPack[-1][0][0]:
+        returnPack.append(thinkresult[idx])
+
+    return returnPack
 
 
 
@@ -208,11 +220,30 @@ class Client(protocol.Protocol):
 
   def dataReceived(self, data):
     self.parseStates(data)
-    pos, dirs = self.thinkMove()
-    if pos != None:
-      myR = pos[0]+","+",".join(map(self.code2Letter, dirs))+"\n"
+    thinkResult = None
+    print "self.numNanosMaintain", self.numNanosMaintain
+    if self.playerStates[' '+self.name]['remain'] == self.totalNanos:
+      num = int(int(self.totalNanos)*0.3)
+      self.numNanosMaintain = num
+      thinkResult = self.thinkMove(num)
+    elif int(self.playerStates[' '+self.name]['inPlay']) < self.numNanosMaintain:
+      numNeeded = self.numNanosMaintain - int(self.playerStates[' '+self.name]['inPlay'])
+      thinkResult = self.thinkMove(numNeeded)
+    else:
+      thinkResult = self.thinkMove(1)
+
+    if thinkResult != None:
+      myR = []
+      for (path,dirs) in thinkResult:
+        myR.append(path[0]+","+",".join(map(self.code2Letter, dirs)))
+      myR = "|".join(myR)+"\n"
     else:
       myR = "PASS\n"
+    # pos, dirs = self.thinkMove(1)
+    # if pos != None:
+    #   myR = pos[0]+","+",".join(map(self.code2Letter, dirs))+"\n"
+    # else:
+    #   myR = "PASS\n"
 
     print "myR", myR
     print "totalNanos", self.totalNanos, self.playerStates
