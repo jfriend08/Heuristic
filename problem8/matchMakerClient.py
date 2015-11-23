@@ -4,6 +4,8 @@ import random
 import argparse
 from twisted.internet import reactor, protocol
 import numpy as np
+import gradientDescent as gd
+from sklearn import preprocessing
 
 board_size = 1000
 
@@ -25,10 +27,21 @@ class Client(protocol.Protocol):
     if len(data) > 10:
       data = map(lambda x:re.split('\s+|\|', x), data)
       del data[-1]
-      m = np.array([elm[:self.N] for elm in data])
-      y = np.array([elm[self.N+2] for elm in data])
-      print "y.shape", y.shape
-      print y
+      X = np.array([elm[:self.N] for elm in data], dtype=float)
+      y = np.array([elm[self.N+2] for elm in data], dtype=float)
+      print "X.shape", X.shape
+      print "Before norm", X
+      min_max_scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=True)
+      X = min_max_scaler.fit_transform(X)
+      print "After norm", X
+      n, dim = X.shape
+      w = np.zeros(dim)
+      mygd = gd.gradientDescent(X, y)
+      wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50000, ita=0.1, c=1, Step_backtrack=True)
+      print "w", w, "iterCount", iterCount
+      for predict, target in zip(map(lambda x:np.dot(w,x), X), y):
+        print predict, target
+
 
   def connectionMade(self):
     # self.transport.write('REGISTER: {0}\n'.format(self.name))
