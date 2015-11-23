@@ -14,8 +14,26 @@ class Client(protocol.Protocol):
   """Random Client"""
   def __init__(self, N):
     self.N = int(N)
+    self.X = None
+    self.y = None
+    self.vw = None
 
   def dataReceived(self, data):
+    if data != "gameover":
+      self.parseAndGD(data)
+      candidate = self.makeCandidate();
+      del candidate[-1]
+      candidateString = ' '.join(str(x) for x in candidate)
+      print "sending candidate", candidateString
+      self.transport.write(candidateString)
+    else:
+      print "GAMEOVER"
+
+  def makeCandidate(self):
+    candidate = [(0 if w<0 else round(w/2, 4)) for w in self.vw]
+    return candidate
+
+  def parseAndGD(self, data):
     print "data\n", data, "\n------------------------\n"
     data = re.split('\n+', data)
     if len(data) > 10:
@@ -23,46 +41,64 @@ class Client(protocol.Protocol):
       del data[-1]
       X = np.array([elm[:self.N] for elm in data], dtype=float)
       y = np.array([elm[self.N+2] for elm in data], dtype=float)
+      self.X = X
+      self.y = y
       print "X.shape", X.shape, "y.shape", y.shape
-      solution = np.linalg.solve(X, y)
-      print "w solution:", solution
       '''Get the sign w, but seems vw performed better'''
-      # wBinary = self.thinkBinaryGD(X, y)
-      # diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(solution, wBinary))
-      # print "Accuracy:", len(np.where(diff>0)[0])/float(len(diff))
-      # print "wBinary:\n", wBinary
+      # bw = self.thinkBinaryGD(X, y)
 
       vw = self.thinkValueGD(X, y)
-      print "vw.shape", vw.shape
-      diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(solution, vw))
-      print "Accuracy:", len(np.where(diff>0)[0])/float(len(diff))
-      print "vw:\n", vw
-      plt.figure(1)
-      plt.subplot(211)
-      plt.plot(vw, 'r--')
-      plt.title('Loss function')
-      plt.ylabel('Value')
-      plt.xlabel('yt')
-      plt.subplot(212)
-      plt.plot(solution, 'b--')
-      plt.show()
-
+      self.vw = vw
+      print "vw.shape", vw.shape, "vw:\n", vw
+      # solution = np.linalg.solve(X, y)
+      # print "w solution:", solution
+      diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(self.y, vw))
+      print "Sign Accuracy:", len(np.where(diff>0)[0])/float(len(diff))
+      self.makePlot(vw)
+      print "self.X.shape", self.X.shape
+    else:
+      data = map(lambda x:re.split('\s+|\|', x), data)
+      del data[-1]
+      newx = np.array([elm[:self.N] for elm in data], dtype=float)
+      newy = np.array([elm[self.N+2] for elm in data], dtype=float)
+      self.X = np.concatenate((self.X, newx))
+      self.y = np.append(self.y, newy)
+      # solution = np.linalg.solve(self.X, self.y)
+      vw = self.thinkValueGD(self.X, self.y)
+      print "vw.shape", vw.shape, "vw:\n", vw
+      diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(self.y, vw))
+      print "Sign Accuracy:", len(np.where(diff>0)[0])/float(len(diff))
+      self.makePlot(vw)
 
   def thinkValueGD(self, X, y):
+    #TODO: grid search for minimize loss function
     X_new = np.apply_along_axis(lambda x:np.append(x,0),1,X)
-    # X_new = np.copy(X)
     print "X_new.shape", X_new.shape
     n, dim = X_new.shape
     w = np.zeros(dim)
     mygd = gd.gradientDescent(X_new, y)
-    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50000, ita=0.11, c=1, Step_backtrack=False)
-    print "result w:", w
+    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50000, ita=0.05, c=1, Step_backtrack=False)
     return w
     # for i in xrange(5):
     #   w = np.random.rand(1, dim).flatten()
     #   print "Testing w", w
     #   print i, "th checking: error sum\n", mygd.grad_checker(w)
     #   print "----------------------"
+  def makePlot(self, vw, target=None):
+    if target==None:
+      plt.plot(vw, 'r--')
+      plt.title('w function')
+      plt.ylabel('Value')
+    else:
+      plt.figure(1)
+      plt.subplot(211)
+      plt.plot(vw, 'r--')
+      plt.title('w function')
+      plt.ylabel('Value')
+      plt.xlabel('each attribute')
+      plt.subplot(212)
+      plt.plot(solution, 'b--')
+    plt.show()
   def thinkBinaryGD(self, X, y):
     min_max_scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=True)
     X_norm = min_max_scaler.fit_transform(X)
