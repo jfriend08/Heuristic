@@ -51,7 +51,7 @@ class gradientDescent(object):
   def __init__(self, X, y, **kwargs):
     self.X = X
     self.y = y
-    self.h = kwargs.get('h', 0.3)
+    self.h = kwargs.get('h', 1)
     self.c = kwargs.get('c', 1)
     self.maxiter = kwargs.get('maxiter', 1000)
     self.ita = kwargs.get('ita', 0.11)
@@ -68,30 +68,53 @@ class gradientDescent(object):
 
   def lossF(self, myinput):
     y, wx = myinput
-    return (y - wx)**2
+    if y*wx > 1+self.h:
+      return 0
+    elif y*wx < 1-self.h:
+      return 1-y*wx
+    else:
+      return (1+self.h-y*wx)**2/(4*self.h)
 
   def lossF_dir(self, w, x, myinput):
     y, wx, dirwx = myinput
+    # print "y", y, "wx", wx, "dirwx", dirwx
     unit = np.ones(self.X.shape[1])
-    return 2*(y-wx) - wx
+    # dirwx = map(lambda x: np.dot(unit, x), self.X)
+    if y*wx > 1+self.h:
+      # print "case 1"
+      return 0
+    elif y*wx < 1-self.h:
+      # print "case 2"
+      return -y*dirwx
+    else:
+      # print "case 3"
+      return (2*(1+self.h-y*wx)/(4*self.h))*(-1)*y*dirwx
 
   def compute_obj(self, w):
     n = self.X.shape[0]
     wx = np.apply_along_axis(lambda x: np.dot(w, x), 1, self.X)
-    return (1/float(2*n)) * np.sum(np.apply_along_axis(lambda x: (x[0]-x[1])**2, 1, zip(wx,self.y)))
+    return np.dot(w, w) + (self.c/n)*sum(np.apply_along_axis(self.lossF, 1, zip(self.y, wx)) )
 
   def compute_grad(self, w):
-    n = self.X.shape[0]
-    wx = np.apply_along_axis(lambda x: np.dot(w, x), 1, self.X)
-    return (1/float(n)) * sum(map(lambda x: (x[0]-x[1])*x[2], zip(wx, self.y, self.X)))
+    unit = np.ones(self.X.shape[1])
+    wx = map(lambda x: np.dot(w, x), self.X)
+    # dirwx = map(lambda x: np.dot(unit, x), self.X)
+    dirwx = self.X
+    result = map(lambda x: self.lossF_dir(w, self.X, x), zip(self.y, wx, dirwx))
+    # print "sum(result)", sum(result)
+    return 2*w + sum(result)
+
+    # unit = np.ones(self.X.shape[1])
+    # wx = np.apply_along_axis(lambda x: np.dot(unit, x), 1, self.X)
+    # return 2*w + sum(map(self.lossF, zip(self.y, wx)) )
 
   def getNumericalResultAtEachDirection(self, compute_obj, w, epslon, eachdir):
     return (compute_obj(w+epslon*eachdir) - compute_obj(w-epslon*eachdir))/(2*epslon)
 
-  def grad_checker(self, w, **kwargs):
+  def grad_checker(self,w, **kwargs):
+    epslon = float(0.1/10**8)
     compute_obj = kwargs.get('compute_obj', self.compute_obj) #user can specify the function
     compute_grad = kwargs.get('compute_grad', self.compute_grad) #user can specify the function
-    epslon = float(0.1/10**8)
     uniDirection = np.zeros((len(w), len(w)), int)
     np.fill_diagonal(uniDirection, 1)
     numericalResult = np.apply_along_axis(lambda x: self.getNumericalResultAtEachDirection(compute_obj, w, epslon, x), 1, uniDirection)
@@ -117,10 +140,8 @@ class gradientDescent(object):
         a = 0.9
         b = 0.5
         dw = np.ones(len(w))
-        # print "val1", compute_obj(w+t*dw), "val2", np.dot(compute_grad(w),dw), "compute_grad(w)", compute_grad(w), "dw", dw
         while compute_obj(w+t*dw) > compute_obj(w) + a*t*np.dot(compute_grad(w),dw):
           t *= b
-        print "Step Size update:", self.ita, "-->", t
         return t
 
     print "------------------", "h", self.h, "c", self.c, "maxiter", self.maxiter, "ita", self.ita, "------------------"
