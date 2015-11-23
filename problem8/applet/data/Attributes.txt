@@ -1,0 +1,51 @@
+likes fishing
+likes basketball
+likes tennis
+likes the Beatles
+likes monster trucks
+likes broccoli
+likes their mother
+likes watching Oprah
+likes traveling
+likes coding
+likes the color purple
+likes the movies
+likes shopping
+likes designer bags
+likes dogs
+likes cats
+likes the country side
+likes the city
+likes the ocean
+likes the dessert
+likes the beach
+likes mac and cheese
+likes peanut butter
+likes Indian food
+likes Chinese food
+likes polka dots
+likes plaid
+likes blondes
+likes brunettes
+likes rainy days
+likes the snow
+likes the sun
+likes Tolkien
+likes Hitchcock
+likes Troy
+likes The Gladiator
+likes Windows
+likes the Mac
+likes Java
+likes C++
+likes the iPhone
+likes the Android
+likes the Wii
+likes the xBox
+likes NYU
+likes Columbia
+likes the opera
+likes Broadway
+likes Final Fantasy
+likes Monkey Island
+
