@@ -21,7 +21,8 @@ class Client(protocol.Protocol):
     pass
 
   def dataReceived(self, data):
-    pass
+    print "data", data
+
 
 
   def connectionMade(self):
