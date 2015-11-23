@@ -17,20 +17,24 @@ class Client(protocol.Protocol):
     self.X = None
     self.y = None
     self.vw = None
+    self.bw = None
+    self.bestAccuracy = None
+    self.isvwbest = None
 
   def dataReceived(self, data):
     if data != "gameover":
       self.parseAndGD(data)
       candidate = self.makeCandidate();
-      del candidate[-1]
       candidateString = ' '.join(str(x) for x in candidate)
-      print "sending candidate", candidateString
+      print "sending candidate", candidateString, "\ncandidate length:", len(candidate)
       self.transport.write(candidateString)
     else:
       print "GAMEOVER"
 
   def makeCandidate(self):
-    candidate = [(0 if w<0 else round(w/2, 4)) for w in self.vw]
+    candidate = [(round(-1, 4) if w<0 else round(1, 4)) for w in (self.vw if self.isvwbest else self.bw)]
+    # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
+    # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
     return candidate
 
   def parseAndGD(self, data):
@@ -45,17 +49,6 @@ class Client(protocol.Protocol):
       self.y = y
       print "X.shape", X.shape, "y.shape", y.shape
       '''Get the sign w, but seems vw performed better'''
-      # bw = self.thinkBinaryGD(X, y)
-
-      vw = self.thinkValueGD(X, y)
-      self.vw = vw
-      print "vw.shape", vw.shape, "vw:\n", vw
-      # solution = np.linalg.solve(X, y)
-      # print "w solution:", solution
-      diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(self.y, vw))
-      print "Sign Accuracy:", len(np.where(diff>0)[0])/float(len(diff))
-      self.makePlot(vw)
-      print "self.X.shape", self.X.shape
     else:
       data = map(lambda x:re.split('\s+|\|', x), data)
       del data[-1]
@@ -63,22 +56,33 @@ class Client(protocol.Protocol):
       newy = np.array([elm[self.N+2] for elm in data], dtype=float)
       self.X = np.concatenate((self.X, newx))
       self.y = np.append(self.y, newy)
-      # solution = np.linalg.solve(self.X, self.y)
-      vw = self.thinkValueGD(self.X, self.y)
-      print "vw.shape", vw.shape, "vw:\n", vw
-      diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(self.y, vw))
-      print "Sign Accuracy:", len(np.where(diff>0)[0])/float(len(diff))
-      self.makePlot(vw)
+
+    x = np.copy(self.X)
+    y = np.copy(self.y)
+    self.bw = self.thinkBinaryGD(x, y)
+    self.vw = self.thinkValueGD(x, y)
+    # print "self.bw\n", ",".join(str(x) for x in self.bw), "\nself.vw:\n", ",".join(str(x) for x in self.vw)
+    # print "len(self.bw)", len(self.bw), "len(self.vw)",len(self.vw)
+    accu_b = self.getAccuracy(self.bw, self.y)
+    accu_v = self.getAccuracy(self.vw, self.y)
+    print "Binary Sign Accuracy:", accu_b, "Value Sign Accuracy:", accu_v
+    # print "len(self.bw)", len(self.bw), "len(self.vw)",len(self.vw)
+    self.bestAccuracy = (accu_b if accu_b > accu_v else accu_v)
+    self.isvwbest = (False if accu_b > accu_v else True)
+    # self.makePlot(vw)
+
+  def getAccuracy(self, inputx, target):
+    diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(target, inputx))
+    return len(np.where(diff>0)[0])/float(len(diff))
 
   def thinkValueGD(self, X, y):
     #TODO: grid search for minimize loss function
     X_new = np.apply_along_axis(lambda x:np.append(x,0),1,X)
-    print "X_new.shape", X_new.shape
     n, dim = X_new.shape
     w = np.zeros(dim)
     mygd = gd.gradientDescent(X_new, y)
-    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50000, ita=0.05, c=1, Step_backtrack=False)
-    return w
+    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=3000, ita=0.05, c=1, Step_backtrack=False)
+    return np.delete(w, -1, 0)
     # for i in xrange(5):
     #   w = np.random.rand(1, dim).flatten()
     #   print "Testing w", w
@@ -99,17 +103,18 @@ class Client(protocol.Protocol):
       plt.subplot(212)
       plt.plot(solution, 'b--')
     plt.show()
+
   def thinkBinaryGD(self, X, y):
     min_max_scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=True)
     X_norm = min_max_scaler.fit_transform(X)
     y_norm = np.array([ (1 if each>=0 else -1) for each in y])
     n, dim = X.shape
     w = np.zeros(dim)
+    # print "thinkBinaryGD X.shape", X.shape, "w.shape", w.shape
     mygd = gdII.gradientDescent(X_norm, y_norm)
-    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50000, ita=0.1, c=1, Step_backtrack=False)
-    product = np.apply_along_axis(lambda x: np.dot(w,x[0])*x[1], 1, zip(X_norm,y_norm) )
-    print "Accuracy1:", len(np.where(product>0)[0])/float(len(product))
-    return w
+    wIter, resultw, iterCount = mygd.my_gradient_decent(w, maxiter=10000, ita=0.3, c=1, Step_backtrack=False)
+    # print "len(resultw)", len(resultw)
+    return resultw
 
   def connectionMade(self):
     # self.transport.write('REGISTER: {0}\n'.format(self.name))
