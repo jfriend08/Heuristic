@@ -1,14 +1,15 @@
 import sys, os, re
 import signal
 import random
-import argparse
 from twisted.internet import reactor, protocol
 import numpy as np
 import gradientDescent as gd
 import gradientDescentII as gdII
 from sklearn import preprocessing
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
+import argparse
+# from sklearn.decomposition import PCA
+# import matplotlib.pyplot as plt
+
 
 class Client(protocol.Protocol):
   """Random Client"""
@@ -20,6 +21,12 @@ class Client(protocol.Protocol):
     self.bw = None
     self.bestAccuracy = None
     self.isvwbest = None
+    self.iter = 0
+    self.itaV = None
+    self.itaB = None
+    self.candidates = []
+    self.maxiterV = 1000
+    self.maxiterB = 500
 
   def dataReceived(self, data):
     if data != "gameover":
@@ -28,17 +35,51 @@ class Client(protocol.Protocol):
       candidateString = ' '.join(str(x) for x in candidate)
       print "sending candidate", candidateString, "\ncandidate length:", len(candidate)
       self.transport.write(candidateString)
+      self.iter += 1
     else:
       print "GAMEOVER"
 
   def makeCandidate(self):
+    # if self.isvwbest:
+    #   X = np.copy(self.vw)
+    #   min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0, 1), copy=True)
+    #   score_norm = min_max_scaler.fit_transform([X])
+    #   print "self.vw\n", X, "\nscore_norm:\n", score_norm
+    #   candidate = score_norm
+    # else:
+    #   candidate = [(round(0, 4) if w<0 else round(1, 4)) for w in (self.vw if self.isvwbest else self.bw)]
+    # candidate = []
+    # if self.isvwbest:
+    #   iteratable = zip(self.vw,self.bw)
+    # else:
+    #   iteratable = zip(self.bw,self.vw)
+
+    # for w in iteratable:
+    #   if w[0]<0 and w[0]*w[1]>=0:
+    #     candidate.append(0)
+    #   elif w[0]>0 and w[0]*w[1]>=0:
+    #     candidate.append(1)
+    #   else:
+    #     candidate.append(0.5)
+
+    # candidate = [(round(0, 4) if w[0]<0 and w[0]*w[1]>=0 elif w[0]>0 and w[0]*w[1]>=0 round(1, 4) else round(0.5, 4) ) for w in (zip(self.vw,self.bw) if self.isvwbest else (self.bw,self.vw))]
     candidate = [(round(0, 4) if w<0 else round(1, 4)) for w in (self.vw if self.isvwbest else self.bw)]
+
+    if candidate in self.candidates:
+      randlist = np.random.permutation(len(candidate))
+      print "before rand change:", candidate
+      for idx in randlist[:5]:
+        candidate[idx] = (0 if candidate[idx] >0 else 1)
+      print "after rand change:", candidate
+      self.maxiterV = (self.maxiterV*1.01 if self.maxiterV<1.5*self.maxiterV else self.maxiterV)
+      self.maxiterB = (self.maxiterB*1.01 if self.maxiterB<1.5*self.maxiterB else self.maxiterB)
+    self.candidates.append(candidate)
     # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
     # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
     return candidate
 
   def parseAndGD(self, data):
-    print "data\n", data, "\n------------------------\n"
+    print "data\n", data
     data = re.split('\n+', data)
     if len(data) > 10:
       data = map(lambda x:re.split('\s+|\|', x), data)
@@ -81,7 +122,23 @@ class Client(protocol.Protocol):
     n, dim = X_new.shape
     w = np.zeros(dim)
     mygd = gd.gradientDescent(X_new, y)
-    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=10000, ita=0.05, c=1, Step_backtrack=False)
+    if self.iter >= 0:
+      bestIta = -1
+      bestw = None
+      bestAccuracy = -100
+      for ita in [0.13, 0.12, 0.13, 0.09, 0.07, 0.05, 0.03, 0.01]:
+        wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50, ita=ita, c=1, Step_backtrack=False)
+        accu_b = self.getAccuracy(w, self.y)
+        if bestAccuracy < accu_b:
+          bestAccuracy = accu_b
+          bestw = w
+          bestIta = ita
+      print "thinkValueGD ita update:", self.itaV, "-->", bestIta, "bestAccuracy", bestAccuracy
+      self.itaV = bestIta
+      w = bestw
+    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=self.maxiterV, ita=self.itaV, c=1, Step_backtrack=False)
+    # accuracy = gd.getAccuracyOverIteration(wIter, X_new, y)
+    # print "thinkValueGD accuracy", accuracy
     return np.delete(w, -1, 0)
     # for i in xrange(5):
     #   w = np.random.rand(1, dim).flatten()
@@ -112,8 +169,24 @@ class Client(protocol.Protocol):
     w = np.zeros(dim)
     # print "thinkBinaryGD X.shape", X.shape, "w.shape", w.shape
     mygd = gdII.gradientDescent(X_norm, y_norm)
-    wIter, resultw, iterCount = mygd.my_gradient_decent(w, maxiter=3000, ita=0.4, c=1, Step_backtrack=False)
+    if self.iter >= 0:
+      bestIta = -1
+      bestw = None
+      bestAccuracy = -100
+      for ita in [0.2, 0.15, 0.11, 0.1, 0.07, 0.05]:
+        wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50, ita=ita, c=1, Step_backtrack=False)
+        accu_b = self.getAccuracy(w, self.y)
+        if bestAccuracy < accu_b:
+          bestAccuracy = accu_b
+          bestw = w
+          bestIta = ita
+      print "thinkBinaryGD ita update:", self.itaB, "-->", bestIta, "bestAccuracy", bestAccuracy
+      self.itaB = bestIta
+      resultw = bestw
+    wIter, resultw, iterCount = mygd.my_gradient_decent(w, maxiter=self.maxiterB, ita=self.itaB, c=1, Step_backtrack=False)
     # print "len(resultw)", len(resultw)
+    # accuracy = gdII.getAccuracyOverIteration(wIter, X_norm, y_norm)
+    # print "thinkBinaryGD accuracy", accuracy
     return resultw
 
   def connectionMade(self):
