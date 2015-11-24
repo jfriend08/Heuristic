@@ -32,7 +32,7 @@ class Client(protocol.Protocol):
       print "GAMEOVER"
 
   def makeCandidate(self):
-    candidate = [(round(-1, 4) if w<0 else round(1, 4)) for w in (self.vw if self.isvwbest else self.bw)]
+    candidate = [(round(0, 4) if w<0 else round(1, 4)) for w in (self.vw if self.isvwbest else self.bw)]
     # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
     # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
     return candidate
@@ -81,7 +81,7 @@ class Client(protocol.Protocol):
     n, dim = X_new.shape
     w = np.zeros(dim)
     mygd = gd.gradientDescent(X_new, y)
-    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=3000, ita=0.05, c=1, Step_backtrack=False)
+    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=10000, ita=0.05, c=1, Step_backtrack=False)
     return np.delete(w, -1, 0)
     # for i in xrange(5):
     #   w = np.random.rand(1, dim).flatten()
@@ -112,7 +112,7 @@ class Client(protocol.Protocol):
     w = np.zeros(dim)
     # print "thinkBinaryGD X.shape", X.shape, "w.shape", w.shape
     mygd = gdII.gradientDescent(X_norm, y_norm)
-    wIter, resultw, iterCount = mygd.my_gradient_decent(w, maxiter=10000, ita=0.3, c=1, Step_backtrack=False)
+    wIter, resultw, iterCount = mygd.my_gradient_decent(w, maxiter=3000, ita=0.4, c=1, Step_backtrack=False)
     # print "len(resultw)", len(resultw)
     return resultw
 
