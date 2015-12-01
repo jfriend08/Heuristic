@@ -228,24 +228,39 @@ class Prey(object):
     upwall, headUp = self.headingUp()
     rldiff = headRight - headLeft
     uddiff = headDown - headUp
-
+    print "rightwall", rightwall
+    print "leftwall", leftwall
     print headRight, headLeft, headDown, headUp
     print "rldiff", rldiff, "uddiff", uddiff
     if rldiff < 10:
-      
+      # rightBount = (rightwall[0][0] if rightwall!=None else 300)
+      # leftBount = (leftwall[0][0] if leftwall!=None else 0)
+      # upPoint = 
+      # downPoint = 
       if hy <= y:
         return "S"
       else:
         return "N"
     elif uddiff < 10:
-      upBound = upwall[0][1]
-      lowBound = downwall[0][1]
-      leftPoint = max(upwall[0][0], downwall[0][0])
-      rightPoint = min(upwall[-1][0], downwall[-1][0])
+      upBound = (upwall[0][1] if upwall!=None else 0)
+      lowBound = (downwall[0][1] if downwall!=None else 300)
+      try:
+        leftPoint = max(upwall[0][0], downwall[0][0])
+      except:
+        leftPoint = 0
+      try:
+        rightPoint = min(upwall[-1][0], downwall[-1][0])
+      except:
+        rightPoint = 300
       print "upBound", upBound, "lowBound", lowBound, "leftPoint", leftPoint, "rightPoint", rightPoint
       if hy > upBound or hy < lowBound:
         ''' hunter not in sandwich, find the cloest exit'''
-        return ("W" if leftPoint !=0 else "E")
+        if leftPoint==0 or rightPoint ==300:
+          return ("W" if leftPoint !=0 else "E")
+        elif abs(x - leftPoint) < abs(x - rightPoint):
+          return "W"
+        else:
+          return "E"
       elif hx <= x:
         return "E"
       else:
