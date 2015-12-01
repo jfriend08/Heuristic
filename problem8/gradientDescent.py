@@ -1,9 +1,9 @@
 import numpy as np
 import random, sys
 from sklearn import preprocessing
-import matplotlib.pyplot as plt
 from sklearn.cross_validation import train_test_split
-from sklearn.decomposition import PCA
+# from sklearn.decomposition import PCA
+# import matplotlib.pyplot as plt
 
 def lossHinge(yt):
     return max(0, 1-yt)
@@ -108,27 +108,51 @@ class gradientDescent(object):
     Step_backtrack = kwargs.get('Step_backtrack', False)
     compute_obj = kwargs.get('compute_obj', self.compute_obj) #user can specify the function
     compute_grad = kwargs.get('compute_grad', self.compute_grad) #user can specify the function
+    stopMethod = kwargs.get('stopMethod', None) #user can specify the function
     iterCount = 0
-    wIter = [w]
+    previousVal = None
+    wIter = []
+
+    if stopMethod == "performance":
+      train_X, vali_X, train_y, vali_y = train_test_split(self.X, self.y, train_size=0.9, random_state=2010)
+      print "Before self.X.shape", self.X.shape
+      self.X = train_X
+      self.y = train_y
+      print "After self.X.shape", self.X.shape
+
     def getStep_backtrack(w):
       if Step_backtrack:
         direction = compute_grad(w)
         t = 1
-        a = 0.9
-        b = 0.5
+        a = 1
+        b = 0.9
         dw = np.ones(len(w))
-        # print "val1", compute_obj(w+t*dw), "val2", np.dot(compute_grad(w),dw), "compute_grad(w)", compute_grad(w), "dw", dw
         while compute_obj(w+t*dw) > compute_obj(w) + a*t*np.dot(compute_grad(w),dw):
           t *= b
-        print "Step Size update:", self.ita, "-->", t
+        print "Step size update:", self.ita, "-->", t
         return t
 
+    def stoppingMethod(w, previousVal, wIter):
+      if stopMethod == "optimize":
+        newVal = self.compute_obj(w)
+        if previousVal == None:
+          return True
+        else:
+          return abs(newVal-previousVal)/float(previousVal) > 0.001
+      elif stopMethod == "performance":
+        if len(wIter) >=10:
+          return 0.9*(1-np.amin(getAccuracyOverIteration(wIter[-10:], vali_X, vali_y))) > (1-np.amin(getAccuracyOverIteration([w], vali_X, vali_y)))
+        return True
+      else:
+        return True
+
     print "------------------", "h", self.h, "c", self.c, "maxiter", self.maxiter, "ita", self.ita, "------------------"
-    while iterCount < self.maxiter:
+    while iterCount < self.maxiter and stoppingMethod(w, previousVal, wIter):
       if iterCount == 1 and Step_backtrack:
         self.ita = getStep_backtrack(w)
-      w = w - self.ita*compute_grad(w)
       wIter.append(w)
+      previousVal = self.compute_obj(w)
+      w = w - self.ita*compute_grad(w)
       iterCount+=1
     return wIter, w, iterCount
 

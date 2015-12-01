@@ -162,7 +162,80 @@ class Prey(object):
       idealDir_coor[1] = 0
     return self.allDirs[tuple(idealDir_coor)]
 
+  def headingRight(self):
+    x, y = self.preyPos
+    headingRight = x
+    headingLeft = x
+    headingUp = y
+    headingDown = y
+    while headingRight!=300:
+      for (wall_dir, wall) in self.walls:
+        if (headingRight, y) in wall:
+          return headingRight
+      headingRight += 1
+    return headingRight
 
+  def headingLeft(self):
+    x, y = self.preyPos
+    headingRight = x
+    headingLeft = x
+    headingUp = y
+    headingDown = y
+    while headingLeft!=0:
+      for (wall_dir, wall) in self.walls:
+        if (headingLeft, y) in wall:
+          print "2 yea!!!!!!"
+          return headingLeft
+      headingLeft -= 1
+    return headingLeft
+
+  def headingUp(self):
+    x, y = self.preyPos
+    headingRight = x
+    headingLeft = x
+    headingUp = y
+    headingDown = y
+    while headingUp!=0:
+      for (wall_dir, wall) in self.walls:
+        if (x, headingUp) in wall:
+          print "3 yea!!!!!!"
+          return headingUp
+      headingUp -= 1
+    return headingUp
+
+  def headingDown(self):
+    x, y = self.preyPos
+    headingRight = x
+    headingLeft = x
+    headingUp = y
+    headingDown = y
+    while headingDown!=300:
+      for (wall_dir, wall) in self.walls:
+        if (x, headingDown) in wall:
+          print "4 yea!!!!!!"
+          return headingDown
+      headingDown += 1
+    return headingDown
+
+  def gotSandwich(self):
+    print "++++++++++ self.preyPos", self.preyPos, "++++++++++"
+    print "++++++++++ self.hunterPos", self.hunterPos, "++++++++++"
+    x, y = self.preyPos
+    hx, hy = self.hunterPos
+    rldiff = self.headingRight() - self.headingLeft()
+    uddiff = self.headingDown() - self.headingUp()
+    print "rldiff", rldiff, "uddiff", uddiff
+    if rldiff < 10:
+      if hy <= y:
+        return "S"
+      else:
+        return "N"
+    elif uddiff < 10:
+      if hx <= x:
+        return "E"
+      else:
+        return "W"
+    return None
 
   def ifWillGetCaughtChangeDir(self, idealDir):
     # TODO: should be more determine to decide new_idealDir semi-opposit to self.hunterDirection, instead just rand
@@ -309,8 +382,12 @@ class Prey(object):
   def decideMove(self):
     atBack = self.preyAtBack()
     idealDir = self.getOppDir[self.hunterDirection]
+    sandwichDir = self.gotSandwich()
 
-    if euclidean(self.hunterPos, self.preyPos) < 100 :
+    if sandwichDir != None:
+      idealDir = sandwichDir
+      print "got sandwiched. idealDir", idealDir
+    elif euclidean(self.hunterPos, self.preyPos) < 100 :
       idealDir = self.ifWillGetCaughtChangeDir(idealDir)
       print "after ifWillGetCaughtChangeDir. idealDir", idealDir
     else:
