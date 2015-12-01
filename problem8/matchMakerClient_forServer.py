@@ -17,7 +17,6 @@ class Client(protocol.Protocol):
     self.N = int(N)
     self.X = None
     self.y = None
-    self.w = None
     self.vw = None
     self.bw = None
     self.bestAccuracy = None
@@ -26,7 +25,7 @@ class Client(protocol.Protocol):
     self.itaV = None
     self.itaB = None
     self.candidates = []
-    self.maxiterV = 2500
+    self.maxiterV = 2000
     self.maxiterB = 500
 
   def dataReceived(self, data):
@@ -34,7 +33,7 @@ class Client(protocol.Protocol):
       self.parseAndGD(data)
       candidate = self.makeCandidate();
       candidateString = ' '.join(str(x) for x in candidate)
-      # print "sending candidate", candidateString, "\ncandidate length:", len(candidate)
+      print "sending candidate", candidateString, "\ncandidate length:", len(candidate)
       self.transport.write(candidateString)
       self.iter += 1
     else:
@@ -72,7 +71,7 @@ class Client(protocol.Protocol):
       for idx in randlist[:5]:
         candidate[idx] = (0 if candidate[idx] >0 else 1)
       print "after rand change:", candidate
-      self.maxiterV = (self.maxiterV*1.0001 if self.maxiterV<1.5*self.maxiterV else self.maxiterV)
+      self.maxiterV = (self.maxiterV*1.001 if self.maxiterV<1.3*self.maxiterV else self.maxiterV)
       # self.maxiterB = (self.maxiterB*1.01 if self.maxiterB<1.5*self.maxiterB else self.maxiterB)
     self.candidates.append(candidate)
     # candidate = [(round(-1*self.bestAccuracy, 4) if w<0 else round(1*self.bestAccuracy, 4)) for w in (self.vw if self.isvwbest else self.bw)]
@@ -114,11 +113,6 @@ class Client(protocol.Protocol):
     self.isvwbest = (False if accu_b > accu_v else True)
     # self.makePlot(vw)
 
-  def compute_obj(self, w):
-    n = self.X.shape[0]
-    wx = np.apply_along_axis(lambda x: np.dot(w, x), 1, self.X)
-    return (1/float(2*n)) * np.sum(np.apply_along_axis(lambda x: (x[0]-x[1])**2, 1, zip(wx,self.y)))
-
   def getAccuracy(self, inputx, target):
     diff = np.apply_along_axis(lambda x:x[0]*x[1], 1, zip(target, inputx))
     return len(np.where(diff>0)[0])/float(len(diff))
@@ -128,18 +122,16 @@ class Client(protocol.Protocol):
     X_new = np.apply_along_axis(lambda x:np.append(x,0),1,X)
     n, dim = X_new.shape
     w = np.zeros(dim)
-    # w = np.random.random_sample((dim,))
-    # w = (self.w if self.w!= None else np.zeros(dim))
     mygd = gd.gradientDescent(X_new, y)
     if self.iter >= 0:
       bestIta = -1
       bestw = None
       bestAccuracy = -100
-      for ita in [0.2, 0.15, 0.13, 0.12, 0.11, 0.09, 0.07, 0.05, 0.03, 0.01]:
+      for ita in [0.4, 0.3, 0.2, 0.15, 0.13, 0.12, 0.11, 0.09, 0.07, 0.05, 0.03, 0.01]: #works great when maxiter=5000
+      # for ita in [0.2, 0.15, 0.13, 0.12, 0.11, 0.09, 0.07, 0.05, 0.03, 0.01]: #works great when maxiter=5000
         # averagedwIter, allw, w, iterCount = mygd.my_sgd(w, maxiter=50, ita=ita, c=1, Step_backtrack=False, stopMethod="performance")
         wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=10, ita=ita, c=1, Step_backtrack=False)
         accu_b = self.getAccuracy(w, self.y)
-        # accu_b = self.compute_obj(np.delete(w, -1, 0))
         if bestAccuracy < accu_b:
           bestAccuracy = accu_b
           bestw = w
@@ -151,11 +143,10 @@ class Client(protocol.Protocol):
     # averagedwIter, allw, w, iterCount = mygd.my_sgd(w, maxiter=self.maxiterV, ita=self.itaV, c=1, Step_backtrack=False, stopMethod="performance")
     # print "Done iterCount:", iterCount
 
-    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=self.maxiterV, ita=self.itaV, c=1, Step_backtrack=False, stopMethod="optimize")
-    # self.w = w
+    wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=self.maxiterV, ita=self.itaV, c=1, Step_backtrack=False)
+
     # accuracy = gd.getAccuracyOverIteration(wIter, X_new, y)
-    print "iterCount:", iterCount
-    # print "thinkValueGD accuracy", accuracy, "\niterCount:", iterCount
+    # print "thinkValueGD accuracy", accuracy
     return np.delete(w, -1, 0)
     # for i in xrange(5):
     #   w = np.random.rand(1, dim).flatten()
@@ -189,11 +180,10 @@ class Client(protocol.Protocol):
     if self.iter >= 0:
       bestIta = -1
       bestw = None
-      bestAccuracy = sys.float_info.max
-      for ita in [0.2, 0.18, 0.17, 0.16, 0.15, 0.13, 0.11, 0.1, 0.07, 0.05, 0.03]: #good for dim 38
+      bestAccuracy = -100
+      for ita in [0.2, 0.18, 0.17, 0.16, 0.15, 0.13, 0.11, 0.1, 0.07, 0.05]: #good for dim 38
         wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50, ita=ita, c=1, Step_backtrack=False)
-        # accu_b = self.getAccuracy(w, self.y)
-        accu_b = self.compute_obj(w)
+        accu_b = self.getAccuracy(w, self.y)
         if bestAccuracy < accu_b:
           bestAccuracy = accu_b
           bestw = w
