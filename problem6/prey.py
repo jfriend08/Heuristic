@@ -106,7 +106,7 @@ class Prey(object):
       startPos = numpy.array(eachWall["position"])
       aWallDirection = self.getWallDirection(eachWall["direction"])
 
-      for i in xrange(length):
+      for i in xrange(length+1):
         newPos = startPos + aWallDirection*i
         aWall.add(tuple(newPos))
       self.walls.append([aWallDirection.tolist(), aWall])
@@ -222,8 +222,16 @@ class Prey(object):
     print "++++++++++ self.hunterPos", self.hunterPos, "++++++++++"
     x, y = self.preyPos
     hx, hy = self.hunterPos
+    headRight = self.headingRight()
+    headLeft = self.headingLeft()
+    headDown = self.headingDown()
+    headUp = self.headingUp()
+    # rldiff = headRight - headLeft
+    # uddiff = headDown - headUp
+    print "self.walls length", len(self.walls), self.walls
     rldiff = self.headingRight() - self.headingLeft()
     uddiff = self.headingDown() - self.headingUp()
+    print headRight, headLeft, headDown, headUp
     print "rldiff", rldiff, "uddiff", uddiff
     if rldiff < 10:
       if hy <= y:
