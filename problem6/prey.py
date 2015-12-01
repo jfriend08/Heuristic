@@ -171,9 +171,9 @@ class Prey(object):
     while headingRight!=300:
       for (wall_dir, wall) in self.walls:
         if (headingRight, y) in wall:
-          return headingRight
+          return sorted(wall), headingRight
       headingRight += 1
-    return headingRight
+    return None, headingRight
 
   def headingLeft(self):
     x, y = self.preyPos
@@ -185,9 +185,9 @@ class Prey(object):
       for (wall_dir, wall) in self.walls:
         if (headingLeft, y) in wall:
           print "2 yea!!!!!!"
-          return headingLeft
+          return sorted(wall), headingLeft
       headingLeft -= 1
-    return headingLeft
+    return None, headingLeft
 
   def headingUp(self):
     x, y = self.preyPos
@@ -199,9 +199,9 @@ class Prey(object):
       for (wall_dir, wall) in self.walls:
         if (x, headingUp) in wall:
           print "3 yea!!!!!!"
-          return headingUp
+          return sorted(wall), headingUp
       headingUp -= 1
-    return headingUp
+    return None, headingUp
 
   def headingDown(self):
     x, y = self.preyPos
@@ -213,33 +213,40 @@ class Prey(object):
       for (wall_dir, wall) in self.walls:
         if (x, headingDown) in wall:
           print "4 yea!!!!!!"
-          return headingDown
+          return sorted(wall), headingDown
       headingDown += 1
-    return headingDown
+    return None, headingDown
 
   def gotSandwich(self):
     print "++++++++++ self.preyPos", self.preyPos, "++++++++++"
     print "++++++++++ self.hunterPos", self.hunterPos, "++++++++++"
     x, y = self.preyPos
     hx, hy = self.hunterPos
-    headRight = self.headingRight()
-    headLeft = self.headingLeft()
-    headDown = self.headingDown()
-    headUp = self.headingUp()
-    # rldiff = headRight - headLeft
-    # uddiff = headDown - headUp
-    print "self.walls length", len(self.walls), self.walls
-    rldiff = self.headingRight() - self.headingLeft()
-    uddiff = self.headingDown() - self.headingUp()
+    rightwall, headRight = self.headingRight()
+    leftwall, headLeft = self.headingLeft()
+    downwall, headDown = self.headingDown()
+    upwall, headUp = self.headingUp()
+    rldiff = headRight - headLeft
+    uddiff = headDown - headUp
+
     print headRight, headLeft, headDown, headUp
     print "rldiff", rldiff, "uddiff", uddiff
     if rldiff < 10:
+      
       if hy <= y:
         return "S"
       else:
         return "N"
     elif uddiff < 10:
-      if hx <= x:
+      upBound = upwall[0][1]
+      lowBound = downwall[0][1]
+      leftPoint = max(upwall[0][0], downwall[0][0])
+      rightPoint = min(upwall[-1][0], downwall[-1][0])
+      print "upBound", upBound, "lowBound", lowBound, "leftPoint", leftPoint, "rightPoint", rightPoint
+      if hy > upBound or hy < lowBound:
+        ''' hunter not in sandwich, find the cloest exit'''
+        return ("W" if leftPoint !=0 else "E")
+      elif hx <= x:
         return "E"
       else:
         return "W"
