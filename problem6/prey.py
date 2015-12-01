@@ -385,7 +385,7 @@ class Prey(object):
 
     dist = (euclidean(hitPosition, self.preyPos) if hitPosition != None else 1000)
 
-    if dist > 100:
+    if dist > 200:
       return idealDir
 
     if hitPosition != None:

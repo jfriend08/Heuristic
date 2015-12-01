@@ -235,15 +235,12 @@ class Hunter(object):
     curr_area = self.prey_area(self.walls)
     ver_area = self.prey_area(self.walls[:] + [self.new_vertical_wall()])
     hor_area = self.prey_area(self.walls[:] + [self.new_horizontal_wall()])
-    print "curr_area", curr_area
-    print "ver_area", ver_area, "hor_area", hor_area
     return min(curr_area, ver_area, hor_area) < curr_area
 
 
   def remove_walls(self, cmd):
     cmd['command'] = 'BD'
     cmd['wallIds'] = []
-
     curr_area = self.prey_area(self.walls)
     for i in xrange(len(self.walls)):
       area = self.prey_area(self.walls[:i] + self.walls[i+1:])
