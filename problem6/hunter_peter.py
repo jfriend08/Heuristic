@@ -54,8 +54,12 @@ class Hunter(object):
     return self.time - self.lastTimeBuiltWall < self.cooldown
 
   def prey_in_front(self):
+    # hx, hy = self.hunter
+    # px, py = self.prey
+    # vx, vy = self.direction
+
     vector_h2p = self.prey[0] - self.hunter[0], self.prey[1] - self.hunter[1]
-    return (vector_h2p[0] * self.direction[0] > 0) and (vector_h2p[1] * self.direction[1] > 0)
+    return (vector_h2p[0] * self.direction[0] >= 0) and (vector_h2p[1] * self.direction[1] >= 0)
 
   def prey_area(self, walls):
     left, right, top, down = [], [], [], []
@@ -214,7 +218,7 @@ class Hunter(object):
       'wallIds': [self.walls[wall]['id']]
     }
     del self.walls[wall]
-    
+
     ver_area = self.prey_area(self.walls[:] + [self.new_vertical_wall()])
     hor_area = self.prey_area(self.walls[:] + [self.new_horizontal_wall()])
     cmd['wall'] = {'direction': ('V' if ver_area < hor_area else 'H')}
@@ -224,14 +228,17 @@ class Hunter(object):
   def good_time_for_wall(self, in_front):
     if self.have_cooldown():
       return False
+    elif abs(self.prey[0] - self.hunter[0])<=3 or abs(self.prey[1] - self.hunter[1])<=3:
+      return False
 
     # Return a wall if it can corner prey into a smaller area
     curr_area = self.prey_area(self.walls)
     ver_area = self.prey_area(self.walls[:] + [self.new_vertical_wall()])
     hor_area = self.prey_area(self.walls[:] + [self.new_horizontal_wall()])
-
+    print "curr_area", curr_area
+    print "ver_area", ver_area, "hor_area", hor_area
     return min(curr_area, ver_area, hor_area) < curr_area
-      
+
 
   def remove_walls(self, cmd):
     cmd['command'] = 'BD'
@@ -283,6 +290,8 @@ class Hunter(object):
     self.hunter = cmd['hunter']
     self.prey = cmd['prey']
     self.time = cmd['time']
+
+    print "self.prey_in_front", self.prey_in_front()
 
     if self.straight >= 10:
       cmd = {
