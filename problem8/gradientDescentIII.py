@@ -1,9 +1,13 @@
+# import numpy as np
+# import random, sys
+# from sklearn import preprocessing
+# import matplotlib.pyplot as plt
+# from sklearn.cross_validation import train_test_split
+# from sklearn.decomposition import PCA
 import numpy as np
 import random, sys
 from sklearn import preprocessing
 from sklearn.cross_validation import train_test_split
-# from sklearn.decomposition import PCA
-# import matplotlib.pyplot as plt
 
 def lossHinge(yt):
     return max(0, 1-yt)
@@ -85,12 +89,16 @@ class gradientDescent(object):
     wx = np.apply_along_axis(lambda x: np.dot(w, x), 1, self.X)
     return (1/float(n)) * sum(map(lambda x: (x[0]-x[1])*x[2], zip(wx, self.y, self.X)))
 
+  def compute_grad_sgd(self, w, xi, yi):
+    n = self.X.shape[0]
+    wx = np.dot(w, xi)
+    # return (wx-yi) * xi
+    return (1/float(n)) * (wx-yi) * xi
+
   def getNumericalResultAtEachDirection(self, compute_obj, w, epslon, eachdir):
     return (compute_obj(w+epslon*eachdir) - compute_obj(w-epslon*eachdir))/(2*epslon)
 
-  def grad_checker(self, w, **kwargs):
-    compute_obj = kwargs.get('compute_obj', self.compute_obj) #user can specify the function
-    compute_grad = kwargs.get('compute_grad', self.compute_grad) #user can specify the function
+  def grad_checker(self, compute_obj, compute_grad, w):
     epslon = float(0.1/10**8)
     uniDirection = np.zeros((len(w), len(w)), int)
     np.fill_diagonal(uniDirection, 1)
@@ -99,6 +107,75 @@ class gradientDescent(object):
     print "numericalResult", numericalResult
     print "analyticResult", analyticResult
     return sum(numericalResult-analyticResult)/sum(analyticResult)
+
+  def my_sgd(self, w, **kwargs):
+    self.h = kwargs.get('h', 0.3)
+    self.c = kwargs.get('c', 1)
+    self.maxiter = kwargs.get('maxiter', 100)
+    self.ita = kwargs.get('ita', 0.11)
+    Step_backtrack = kwargs.get('Step_backtrack', False)
+    compute_obj = kwargs.get('compute_obj', self.compute_obj) #user can specify the function
+    compute_grad = kwargs.get('compute_grad', self.compute_grad) #user can specify the function
+    stopMethod = kwargs.get('stopMethod', None) #user can specify the function
+
+    rng = np.random.RandomState(19850920)
+    iterCount = 0
+    previousVal = None
+    averagedwIter = []
+    wAtIter = []
+    allw = []
+
+    # print "stopMethod", stopMethod
+    if stopMethod == "performance":
+      train_X, vali_X, train_y, vali_y = train_test_split(self.X, self.y, train_size=0.9, random_state=2010)
+      # print "Before self.X.shape", self.X.shape
+      self.X = train_X
+      self.y = train_y
+      # print "After self.X.shape", self.X.shape
+
+    def getStep_backtrack(w):
+      if Step_backtrack:
+        direction = compute_grad(w)
+        t = 1
+        a = 1
+        b = 0.9
+        dw = np.ones(len(w))
+        while compute_obj(w+t*dw) > compute_obj(w) + a*t*np.dot(compute_grad(w),dw):
+          t *= b
+        print "Step size update:", self.ita, "-->", t
+        return t
+
+    def stoppingMethod(w, previousVal, wIter):
+      if stopMethod == "optimize":
+        newVal = self.compute_obj(w)
+        if previousVal == None:
+          return True
+        else:
+          return abs(newVal-previousVal)/float(previousVal) > 0.001
+      elif stopMethod == "performance":
+        if len(wIter) >=10:
+          return 0.9*(1-np.amin(getAccuracyOverIteration(wIter[-10:], vali_X, vali_y))) > (1-np.amin(getAccuracyOverIteration([w], vali_X, vali_y)))
+        return True
+      else:
+        return True
+
+    n, dim = self.X.shape
+    # print "self.X.shape", self.X.shape
+    # print "self.maxiter*n", self.maxiter*n
+    while iterCount < self.maxiter*n and stoppingMethod(w, previousVal, wAtIter):
+      if iterCount == 1 and Step_backtrack:
+        self.ita = getStep_backtrack(w)
+      allw.append(w)
+      wAtIter.append(w)
+      previousVal = self.compute_obj(w)
+      w = w - self.ita*self.compute_grad_sgd(w, self.X[iterCount%n], self.y[iterCount%n])
+      iterCount+=1
+      if iterCount%n == 0:
+        permutation = rng.permutation(n)
+        self.X, self.y = self.X[permutation], self.y[permutation]
+        averagedwIter.append(np.mean(wAtIter, axis=0))
+        wAtIter = []
+    return averagedwIter, allw, w, iterCount
 
   def my_gradient_decent(self, w, **kwargs):
     self.h = kwargs.get('h', 0.3)
@@ -113,6 +190,7 @@ class gradientDescent(object):
     previousVal = None
     wIter = []
 
+    print "stopMethod", stopMethod
     if stopMethod == "performance":
       train_X, vali_X, train_y, vali_y = train_test_split(self.X, self.y, train_size=0.9, random_state=2010)
       print "Before self.X.shape", self.X.shape
@@ -147,54 +225,56 @@ class gradientDescent(object):
         return True
 
     print "------------------", "h", self.h, "c", self.c, "maxiter", self.maxiter, "ita", self.ita, "------------------"
-    bestVale = sys.float_info.max
-    bestw = None
     while iterCount < self.maxiter and stoppingMethod(w, previousVal, wIter):
       if iterCount == 1 and Step_backtrack:
         self.ita = getStep_backtrack(w)
       wIter.append(w)
       previousVal = self.compute_obj(w)
-      if bestVale > previousVal:
-        bestVale = previousVal
-        bestw = w
       w = w - self.ita*compute_grad(w)
       iterCount+=1
-    return wIter, bestw, iterCount
+    return wIter, w, iterCount
 
 
 
 ''' generate Gaussian distributions with fix covariance'''
-# X, y = dataset_fixed_cov(300, 2, C = np.array([[0.5, -0.23], [0.83, .23]]) ) #n, d, C
-# pca = PCA()
-# pca.fit(X)
-# X_pca = pca.transform(X)
-# plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, linewidths=0, s=30)
-# plt.show()
+# # X, y = dataset_fixed_cov(300, 2, C = np.array([[0.5, -0.23], [0.83, .23]]) ) #n, d, C
+# # pca = PCA()
+# # pca.fit(X)
+# # X_pca = pca.transform(X)
+# # plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, linewidths=0, s=30)
+# # plt.show()
 
 # import points as pt
 # from sklearn.cross_validation import train_test_split
-# X, y = pt.dataset_fixed_cov(500, 10, 3) #n, dim, overlapped dist
+# X, y = pt.dataset_fixed_cov(1000, 10, 3) #n, dim, overlapped dist
 # print "X.shape", X.shape
 # min_max_scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=True)
 # X = min_max_scaler.fit_transform(X)
 # rng = np.random.RandomState(19850920)
 # permutation = rng.permutation(len(X))
 # X, y = X[permutation], y[permutation]
-# train_X, test_X, train_y, test_y = train_test_split(X, y, train_size=0.1, random_state=2010)
-# # pt.plotPCA(X, y)
+# train_X, test_X, train_y, test_y = train_test_split(X, y, train_size=0.3, random_state=2010)
+# pt.plotPCA(X, y)
 
-# min_max_scaler = preprocessing.MinMaxScaler(feature_range=(-1, 1), copy=True)
-# X = min_max_scaler.fit_transform(X)
-# rng = np.random.RandomState(19850920)
-# permutation = rng.permutation(len(X))
-# X, y = X[permutation], y[permutation]
-# train_X, test_X, train_y, test_y = train_test_split(X, y, train_size=0.1, random_state=2010)
 
 # n, dim = X.shape
 # w = np.zeros(dim)
 # mygd = gradientDescent(train_X, train_y)
 # # mygd.my_gradient_decent(w)
-# wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50, ita=0.1, c=1, Step_backtrack=True)
+# wIter, w, iterCount = mygd.my_gradient_decent(w, maxiter=50, ita=0.1, c=1, Step_backtrack=False, stopMethod="performance")
+# print w, iterCount
+
+# n, dim = X.shape
+# w = np.zeros(dim)
+# mygd = gradientDescent(train_X, train_y)
+# # mygd.my_gradient_decent(w)
+# averagedwIter, allw, w, iterCount = mygd.my_sgd(w, maxiter=5, ita=0.1, c=1, Step_backtrack=False, stopMethod="optimize")
+
+# print w, iterCount
+# print "averagedwIter[:5]\n", averagedwIter[:5]
+# print "accuracy averagedwIter over iteration:\n", getAccuracyOverIteration(averagedwIter, train_X, train_y)
+# print "objective of averagedwIter over iteration:\n", map(mygd.compute_obj, averagedwIter)
+# print "objective of allw over iteration:\n", map(mygd.compute_obj, allw)
 '''----------------------------------------------'''
 
 
