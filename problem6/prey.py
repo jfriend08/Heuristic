@@ -228,33 +228,75 @@ class Prey(object):
     upwall, headUp = self.headingUp()
     rldiff = headRight - headLeft
     uddiff = headDown - headUp
-    print "rightwall", rightwall
-    print "leftwall", leftwall
+
     print headRight, headLeft, headDown, headUp
     print "rldiff", rldiff, "uddiff", uddiff
-    if rldiff < 10:
-      # rightBount = (rightwall[0][0] if rightwall!=None else 300)
-      # leftBount = (leftwall[0][0] if leftwall!=None else 0)
-      # upPoint = 
-      # downPoint = 
-      if hy <= y:
+
+    if rldiff < 15:
+      rightBound = (rightwall[0][0] if rightwall!=None else 300)
+      leftBound = (leftwall[0][0] if leftwall!=None else 0)
+      try:
+        upPoint = max(rightwall[0][1], leftwall[0][1])
+      except:
+        if rightwall != None:
+          upPoint = rightwall[0][1]
+        elif leftwall != None:
+          upPoint = leftwall[0][1]
+        else:
+          upPoint = 0
+      try:
+        downPoint = max(rightwall[-1][1], leftwall[-1][1])
+      except:
+        if rightwall != None:
+          downPoint = rightwall[-1][1]
+        elif leftwall != None:
+          downPoint = leftwall[-1][1]
+        else:
+          downPoint = 300
+
+      print "rightBound", rightBound, "leftBound", leftBound, "upPoint", upPoint, "downPoint", downPoint
+
+      if hx < leftBound or hx > rightBound:
+        ''' hunter not in horizental sandwich, prey find the closest exit'''
+        print "==> Hunter no in bound"
+        if upPoint == 0 or downPoint == 300:
+          return ("N" if upPoint!=0 else "S")
+        elif abs(y - upPoint) < abs(y - downPoint):
+          return "N"
+        else:
+          return "S"
+      elif hy <= y:
         return "S"
       else:
         return "N"
-    elif uddiff < 10:
+
+    elif uddiff < 15:
       upBound = (upwall[0][1] if upwall!=None else 0)
       lowBound = (downwall[0][1] if downwall!=None else 300)
       try:
         leftPoint = max(upwall[0][0], downwall[0][0])
       except:
-        leftPoint = 0
+        if upwall != None:
+          leftPoint = upwall[0][0]
+        elif downwall != None:
+          leftPoint = downwall[0][0]
+        else:
+          leftPoint = 0
       try:
         rightPoint = min(upwall[-1][0], downwall[-1][0])
       except:
-        rightPoint = 300
+        if upwall != None:
+          rightPoint = upwall[-1][0]
+        elif downwall != None:
+          rightPoint = downwall[-1][0]
+        else:
+          rightPoint = 300
+
       print "upBound", upBound, "lowBound", lowBound, "leftPoint", leftPoint, "rightPoint", rightPoint
-      if hy > upBound or hy < lowBound:
+
+      if hy < upBound or hy > lowBound:
         ''' hunter not in sandwich, find the cloest exit'''
+        print "==> Hunter no in bound"
         if leftPoint==0 or rightPoint ==300:
           return ("W" if leftPoint !=0 else "E")
         elif abs(x - leftPoint) < abs(x - rightPoint):
